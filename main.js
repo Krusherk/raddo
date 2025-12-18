@@ -31,6 +31,7 @@ let signer = null;
 let contract = null;
 let userAddress = null;
 let currentGameId = null;
+let dropdownOpen = false;
 
 // ============ DOM ============
 const $ = (sel) => document.querySelector(sel);
@@ -38,10 +39,18 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 const dom = {
     connectBtn: $('#connectBtn'),
+    walletDropdown: $('#walletDropdown'),
+    copyAddressBtn: $('#copyAddressBtn'),
+    disconnectBtn: $('#disconnectBtn'),
+    balanceDisplay: $('#balanceDisplay'),
+    balanceValue: $('#balanceValue'),
     landingView: $('#landingView'),
     lobbyView: $('#lobbyView'),
     gameView: $('#gameView'),
+    howItWorksView: $('#howItWorksView'),
     playNowBtn: $('#playNowBtn'),
+    howItWorksLink: $('#howItWorksLink'),
+    backFromHowItWorks: $('#backFromHowItWorks'),
     backToLanding: $('#backToLanding'),
     statGames: $('#statGames'),
     statWaiting: $('#statWaiting'),
@@ -72,7 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function bindEvents() {
-    dom.connectBtn.addEventListener('click', connectWallet);
+    dom.connectBtn.addEventListener('click', handleWalletClick);
+    dom.copyAddressBtn.addEventListener('click', copyAddress);
+    dom.disconnectBtn.addEventListener('click', disconnectWallet);
     dom.playNowBtn.addEventListener('click', () => {
         if (!userAddress) {
             connectWallet();
@@ -80,12 +91,24 @@ function bindEvents() {
             showView('lobby');
         }
     });
+    dom.howItWorksLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('howItWorks');
+    });
+    dom.backFromHowItWorks.addEventListener('click', () => showView('landing'));
     dom.backToLanding.addEventListener('click', () => showView('landing'));
     dom.exitGameBtn.addEventListener('click', exitGame);
     dom.resultBtn.addEventListener('click', closeResult);
 
     $$('.stake-btn').forEach(btn => {
         btn.addEventListener('click', () => joinGame(parseInt(btn.dataset.tier)));
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.wallet-wrapper') && dropdownOpen) {
+            closeDropdown();
+        }
     });
 }
 
@@ -103,6 +126,54 @@ async function checkExistingConnection() {
 }
 
 // ============ Wallet ============
+function handleWalletClick() {
+    if (userAddress) {
+        toggleDropdown();
+    } else {
+        connectWallet();
+    }
+}
+
+function toggleDropdown() {
+    dropdownOpen = !dropdownOpen;
+    dom.walletDropdown.classList.toggle('hidden', !dropdownOpen);
+}
+
+function closeDropdown() {
+    dropdownOpen = false;
+    dom.walletDropdown.classList.add('hidden');
+}
+
+function copyAddress() {
+    if (userAddress) {
+        navigator.clipboard.writeText(userAddress);
+        notify('Address copied!', 'success');
+        closeDropdown();
+    }
+}
+
+function disconnectWallet() {
+    userAddress = null;
+    provider = null;
+    signer = null;
+    contract = null;
+    currentGameId = null;
+
+    dom.connectBtn.innerHTML = `
+    <span class="connect-text">Connect</span>
+    <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+      <polyline points="10 17 15 12 10 7"/>
+      <line x1="15" y1="12" x2="3" y2="12"/>
+    </svg>
+  `;
+    dom.connectBtn.classList.remove('connected');
+    dom.balanceDisplay.classList.add('hidden');
+    closeDropdown();
+    showView('landing');
+    notify('Wallet disconnected', 'info');
+}
+
 async function connectWallet() {
     console.log('Connect wallet clicked');
 
@@ -114,17 +185,14 @@ async function connectWallet() {
     try {
         notify('Connecting wallet...', 'info');
 
-        // Request accounts
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         console.log('Accounts:', accounts);
 
         userAddress = accounts[0];
 
-        // Create provider and signer using ethers from CDN (global)
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
 
-        // Check network
         const network = await provider.getNetwork();
         console.log('Network:', network.chainId);
 
@@ -132,7 +200,6 @@ async function connectWallet() {
             await switchNetwork();
         }
 
-        // Setup contract
         contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
         console.log('Contract ready');
 
@@ -140,19 +207,17 @@ async function connectWallet() {
         dom.connectBtn.innerHTML = `<span class="connect-text">${truncate(userAddress)}</span>`;
         dom.connectBtn.classList.add('connected');
 
-        // Setup events
+        // Update balance
+        await updateBalance();
+
         setupEvents();
-
-        // Check active game
         await checkActiveGame();
-
-        // Update stats
         await updateStats();
 
-        // Start polling
         setInterval(() => {
             if (currentGameId) refreshGame();
             else updateStats();
+            updateBalance();
         }, 5000);
 
         notify('Wallet connected!', 'success');
@@ -160,6 +225,19 @@ async function connectWallet() {
     } catch (err) {
         console.error('Connection error:', err);
         notify(err.message || 'Connection failed', 'error');
+    }
+}
+
+async function updateBalance() {
+    if (!provider || !userAddress) return;
+
+    try {
+        const balance = await provider.getBalance(userAddress);
+        const formatted = parseFloat(ethers.formatEther(balance)).toFixed(2);
+        dom.balanceValue.textContent = formatted;
+        dom.balanceDisplay.classList.remove('hidden');
+    } catch (err) {
+        console.error('Balance error:', err);
     }
 }
 
@@ -226,6 +304,7 @@ function setupEvents() {
         if (Number(gameId) === currentGameId) {
             const won = winner.toLowerCase() === userAddress.toLowerCase();
             showResult(won, ethers.formatEther(payout));
+            await updateBalance();
         }
     });
 }
@@ -244,7 +323,7 @@ async function joinGame(tier) {
         const tx = await contract.joinGame(tier, { value: payment });
         notify('Transaction sent...', 'info');
         await tx.wait();
-        notify('Joined successfully!', 'success');
+        await updateBalance();
     } catch (err) {
         console.error(err);
         notify(err.reason || err.message || 'Transaction failed', 'error');
@@ -274,6 +353,7 @@ function showView(view) {
     dom.landingView.classList.add('hidden');
     dom.lobbyView.classList.add('hidden');
     dom.gameView.classList.add('hidden');
+    dom.howItWorksView.classList.add('hidden');
 
     if (view === 'landing') dom.landingView.classList.remove('hidden');
     if (view === 'lobby') {
@@ -281,6 +361,7 @@ function showView(view) {
         updateStats();
     }
     if (view === 'game') dom.gameView.classList.remove('hidden');
+    if (view === 'howItWorks') dom.howItWorksView.classList.remove('hidden');
 }
 
 async function checkActiveGame() {
