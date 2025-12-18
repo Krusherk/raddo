@@ -1,150 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Danger Tiles - A thrilling blockchain tile game on Monad. Avoid the danger, win the pot!">
-  <title>Danger Tiles | Monad Blockchain Game</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="index.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Danger Tiles - A thrilling blockchain tile game on Monad">
+    <title>Danger Tiles | Monad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
-  <div id="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo">
-        <span class="logo-icon">💎</span>
-        <span class="logo-text">Danger Tiles</span>
-      </div>
-      <div class="header-right">
-        <div class="network-badge">
-          <span class="network-dot"></span>
-          <span>Monad Testnet</span>
-        </div>
-        <button id="connectBtn" class="btn btn-primary">
-          <span class="btn-icon">🔗</span>
-          <span>Connect Wallet</span>
-        </button>
-      </div>
-    </header>
+    <div class="noise"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
 
-    <!-- Main Content -->
-    <main class="main">
-      <!-- Hero Section -->
-      <section id="heroSection" class="hero">
-        <div class="hero-content">
-          <h1 class="hero-title">
-            <span class="gradient-text">Avoid the Danger</span>
-            <br>Win the Pot
-          </h1>
-          <p class="hero-subtitle">
-            A thrilling blockchain tile game. Pick safe tiles, avoid the 2 hidden dangers, 
-            and claim your opponent's bet!
-          </p>
-          <div class="hero-stats">
-            <div class="stat-card">
-              <span class="stat-value" id="totalGames">0</span>
-              <span class="stat-label">Games Played</span>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+                        <line x1="12" y1="22" x2="12" y2="15.5" />
+                        <polyline points="22 8.5 12 15.5 2 8.5" />
+                    </svg>
+                </div>
+                <span class="brand-text">DANGER<span class="brand-accent">TILES</span></span>
             </div>
-            <div class="stat-card">
-              <span class="stat-value" id="waitingGames">0</span>
-              <span class="stat-label">Waiting Lobbies</span>
+
+            <div class="nav-status">
+                <div class="chain-indicator">
+                    <span class="chain-dot"></span>
+                    <span class="chain-name">Monad Testnet</span>
+                </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- Lobby Section -->
-      <section id="lobbySection" class="lobby hidden">
-        <h2 class="section-title">Choose Your Stakes</h2>
-        <div class="tier-cards">
-          <div class="tier-card" data-tier="0">
-            <div class="tier-badge">Starter</div>
-            <div class="tier-bet">1 MON</div>
-            <div class="tier-fee">+ 1 MON fee</div>
-            <div class="tier-total">Total: 2 MON</div>
-            <div class="tier-waiting" id="tier0Waiting">
-              <span class="waiting-dot"></span>
-              <span>No one waiting</span>
+            <button id="connectBtn" class="connect-btn">
+                <span class="connect-text">Connect</span>
+                <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Landing View -->
+            <section id="landingView" class="view landing">
+                <div class="landing-content">
+                    <div class="landing-badge">LIVE ON MONAD</div>
+                    <h1 class="landing-title">
+                        Step carefully.<br>
+                        <span class="title-highlight">Win big.</span>
+                    </h1>
+                    <p class="landing-desc">
+                        25 tiles. 2 are lethal. Take turns picking tiles with your opponent.
+                        Hit a danger tile and lose your bet. Last one standing takes the pot.
+                    </p>
+
+                    <div class="landing-cta">
+                        <button id="playNowBtn" class="btn-play">
+                            <span>Play Now</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="landing-stats">
+                        <div class="stat">
+                            <span class="stat-num" id="statGames">0</span>
+                            <span class="stat-label">Games</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat">
+                            <span class="stat-num" id="statWaiting">0</span>
+                            <span class="stat-label">Waiting</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat">
+                            <span class="stat-num">2x</span>
+                            <span class="stat-label">Payout</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="landing-visual">
+                    <div class="grid-preview">
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile danger"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile safe"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile safe"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile"></div>
+                        <div class="preview-tile danger"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lobby View -->
+            <section id="lobbyView" class="view lobby hidden">
+                <div class="lobby-header">
+                    <h2 class="lobby-title">Select Stakes</h2>
+                    <p class="lobby-subtitle">Players are matched within the same tier</p>
+                </div>
+
+                <div class="stakes-grid">
+                    <div class="stake-card" data-tier="0">
+                        <div class="stake-tier">TIER 1</div>
+                        <div class="stake-amount">
+                            <span class="amount-value">1</span>
+                            <span class="amount-currency">MON</span>
+                        </div>
+                        <div class="stake-details">
+                            <div class="detail-row">
+                                <span>Entry fee</span>
+                                <span>+1 MON</span>
+                            </div>
+                            <div class="detail-row total">
+                                <span>Total</span>
+                                <span>2 MON</span>
+                            </div>
+                        </div>
+                        <div class="stake-status" id="stake0Status">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Empty lobby</span>
+                        </div>
+                        <button class="stake-btn" data-tier="0">Enter Game</button>
+                    </div>
+
+                    <div class="stake-card featured" data-tier="1">
+                        <div class="stake-badge">POPULAR</div>
+                        <div class="stake-tier">TIER 2</div>
+                        <div class="stake-amount">
+                            <span class="amount-value">5</span>
+                            <span class="amount-currency">MON</span>
+                        </div>
+                        <div class="stake-details">
+                            <div class="detail-row">
+                                <span>Entry fee</span>
+                                <span>+1 MON</span>
+                            </div>
+                            <div class="detail-row total">
+                                <span>Total</span>
+                                <span>6 MON</span>
+                            </div>
+                        </div>
+                        <div class="stake-status" id="stake1Status">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Empty lobby</span>
+                        </div>
+                        <button class="stake-btn" data-tier="1">Enter Game</button>
+                    </div>
+
+                    <div class="stake-card" data-tier="2">
+                        <div class="stake-tier">TIER 3</div>
+                        <div class="stake-amount">
+                            <span class="amount-value">10</span>
+                            <span class="amount-currency">MON</span>
+                        </div>
+                        <div class="stake-details">
+                            <div class="detail-row">
+                                <span>Entry fee</span>
+                                <span>+1 MON</span>
+                            </div>
+                            <div class="detail-row total">
+                                <span>Total</span>
+                                <span>11 MON</span>
+                            </div>
+                        </div>
+                        <div class="stake-status" id="stake2Status">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Empty lobby</span>
+                        </div>
+                        <button class="stake-btn" data-tier="2">Enter Game</button>
+                    </div>
+                </div>
+
+                <button id="backToLanding" class="btn-back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12" />
+                        <polyline points="12 19 5 12 12 5" />
+                    </svg>
+                    Back
+                </button>
+            </section>
+
+            <!-- Game View -->
+            <section id="gameView" class="view game hidden">
+                <div class="game-top">
+                    <div class="game-meta">
+                        <span class="meta-item">
+                            <span class="meta-label">GAME</span>
+                            <span class="meta-value" id="gameId">#0</span>
+                        </span>
+                        <span class="meta-divider">|</span>
+                        <span class="meta-item">
+                            <span class="meta-label">POT</span>
+                            <span class="meta-value" id="gamePot">0 MON</span>
+                        </span>
+                    </div>
+                    <div class="game-state" id="gameState">Waiting for opponent</div>
+                </div>
+
+                <div class="game-arena">
+                    <div class="player-panel left">
+                        <div class="player-card" id="p1Card">
+                            <div class="player-indicator"></div>
+                            <div class="player-info">
+                                <span class="player-label">Player 1</span>
+                                <span class="player-addr" id="p1Addr">-</span>
+                            </div>
+                            <div class="player-you" id="p1You">YOU</div>
+                        </div>
+                    </div>
+
+                    <div class="board-container">
+                        <div class="board" id="gameBoard"></div>
+                        <div class="board-overlay" id="boardOverlay">
+                            <div class="overlay-content">
+                                <div class="spinner"></div>
+                                <span id="overlayText">Waiting...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="player-panel right">
+                        <div class="player-card" id="p2Card">
+                            <div class="player-indicator"></div>
+                            <div class="player-info">
+                                <span class="player-label">Player 2</span>
+                                <span class="player-addr" id="p2Addr">-</span>
+                            </div>
+                            <div class="player-you" id="p2You">YOU</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-bottom">
+                    <button id="exitGameBtn" class="btn-exit">Exit Game</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Result Overlay -->
+        <div id="resultOverlay" class="result-overlay hidden">
+            <div class="result-card">
+                <div class="result-icon" id="resultIcon">🏆</div>
+                <h2 class="result-title" id="resultTitle">Victory!</h2>
+                <p class="result-info" id="resultInfo">You won 2 MON</p>
+                <button id="resultBtn" class="result-btn">Continue</button>
             </div>
-            <button class="btn btn-tier" data-tier="0">Join Game</button>
-          </div>
-          <div class="tier-card featured" data-tier="1">
-            <div class="tier-popular">Most Popular</div>
-            <div class="tier-badge">Standard</div>
-            <div class="tier-bet">5 MON</div>
-            <div class="tier-fee">+ 1 MON fee</div>
-            <div class="tier-total">Total: 6 MON</div>
-            <div class="tier-waiting" id="tier1Waiting">
-              <span class="waiting-dot"></span>
-              <span>No one waiting</span>
-            </div>
-            <button class="btn btn-tier" data-tier="1">Join Game</button>
-          </div>
-          <div class="tier-card" data-tier="2">
-            <div class="tier-badge">High Roller</div>
-            <div class="tier-bet">10 MON</div>
-            <div class="tier-fee">+ 1 MON fee</div>
-            <div class="tier-total">Total: 11 MON</div>
-            <div class="tier-waiting" id="tier2Waiting">
-              <span class="waiting-dot"></span>
-              <span>No one waiting</span>
-            </div>
-            <button class="btn btn-tier" data-tier="2">Join Game</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Game Section -->
-      <section id="gameSection" class="game hidden">
-        <div class="game-header">
-          <div class="game-info">
-            <span class="game-id">Game #<span id="currentGameId">0</span></span>
-            <span class="game-bet">Bet: <span id="currentBet">0</span> MON</span>
-          </div>
-          <div class="game-status" id="gameStatus">Waiting for opponent...</div>
         </div>
 
-        <div class="game-players">
-          <div class="player player-1" id="player1Card">
-            <div class="player-avatar">👤</div>
-            <div class="player-address" id="player1Address">-</div>
-            <div class="player-label">Player 1</div>
-          </div>
-          <div class="vs-badge">VS</div>
-          <div class="player player-2" id="player2Card">
-            <div class="player-avatar">👤</div>
-            <div class="player-address" id="player2Address">-</div>
-            <div class="player-label">Player 2</div>
-          </div>
-        </div>
+        <!-- Notifications -->
+        <div id="notifications" class="notifications"></div>
+    </div>
 
-        <div class="game-board" id="gameBoard">
-          <!-- 5x5 Grid - 25 tiles -->
-        </div>
-
-        <div class="game-actions">
-          <button id="leaveGameBtn" class="btn btn-secondary">Leave Game</button>
-        </div>
-      </section>
-
-      <!-- Result Modal -->
-      <div id="resultModal" class="modal hidden">
-        <div class="modal-content">
-          <div class="modal-icon" id="resultIcon">🎉</div>
-          <h2 class="modal-title" id="resultTitle">You Won!</h2>
-          <p class="modal-message" id="resultMessage">You received 2 MON</p>
-          <button id="closeModalBtn" class="btn btn-primary">Back to Lobby</button>
-        </div>
-      </div>
-    </main>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-  </div>
-
-  <script type="module" src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
+
 </html>
