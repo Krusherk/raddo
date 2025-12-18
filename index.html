@@ -34,21 +34,51 @@
                 <span class="brand-text">DANGER<span class="brand-accent">TILES</span></span>
             </div>
 
-            <div class="nav-status">
-                <div class="chain-indicator">
-                    <span class="chain-dot"></span>
-                    <span class="chain-name">Monad Testnet</span>
-                </div>
+            <div class="nav-center">
+                <a href="#how-it-works" class="nav-link" id="howItWorksLink">How it Works</a>
+                <a href="https://x.com/takkofun" target="_blank" class="nav-link nav-twitter">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    <span>@takkofun</span>
+                </a>
             </div>
 
-            <button id="connectBtn" class="connect-btn">
-                <span class="connect-text">Connect</span>
-                <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                </svg>
-            </button>
+            <div class="nav-right">
+                <div class="balance-display hidden" id="balanceDisplay">
+                    <span class="balance-value" id="balanceValue">0.00</span>
+                    <span class="balance-currency">MON</span>
+                </div>
+                <div class="wallet-wrapper">
+                    <button id="connectBtn" class="connect-btn">
+                        <span class="connect-text">Connect</span>
+                        <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                            <polyline points="10 17 15 12 10 7" />
+                            <line x1="15" y1="12" x2="3" y2="12" />
+                        </svg>
+                    </button>
+                    <div class="wallet-dropdown hidden" id="walletDropdown">
+                        <button class="dropdown-item" id="copyAddressBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                            Copy Address
+                        </button>
+                        <button class="dropdown-item" id="disconnectBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                            Disconnect
+                        </button>
+                    </div>
+                </div>
+            </div>
         </nav>
 
         <!-- Main Content -->
@@ -111,6 +141,67 @@
                         <div class="preview-tile"></div>
                         <div class="preview-tile"></div>
                         <div class="preview-tile danger"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works Section -->
+            <section id="howItWorksView" class="view how-it-works hidden">
+                <button id="backFromHowItWorks" class="btn-back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12" />
+                        <polyline points="12 19 5 12 12 5" />
+                    </svg>
+                    Back
+                </button>
+
+                <h2 class="section-title">How It Works</h2>
+
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Connect Wallet</h3>
+                        <p>Connect your MetaMask wallet with MON tokens on Monad Testnet.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>Choose Stakes</h3>
+                        <p>Select a tier: 1, 5, or 10 MON. You'll be matched with a player in the same tier.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>Wait for Match</h3>
+                        <p>Either wait for an opponent, or join an existing game. VRF generates 2 hidden danger tiles.
+                        </p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h3>Take Turns</h3>
+                        <p>Click tiles in turn. Safe tiles are revealed. Hit a danger tile and you lose!</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <h3>Win the Pot</h3>
+                        <p>Last player standing wins 2x the bet amount. Payouts are instant and automatic.</p>
+                    </div>
+                </div>
+
+                <div class="info-cards">
+                    <div class="info-card">
+                        <h4>💰 Fee Structure</h4>
+                        <p>Each player pays bet + 1 MON fee. The fee covers VRF randomness and platform costs.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🎲 Provably Fair</h4>
+                        <p>Danger tiles are set by Pyth Entropy VRF - verifiable on-chain randomness.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>⚡ Monad Speed</h4>
+                        <p>Built on Monad Testnet for fast, low-cost transactions.</p>
                     </div>
                 </div>
             </section>
