@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Danger Tiles - A thrilling blockchain tile game on Monad. Avoid the danger, win the pot!">
+  <title>Danger Tiles | Monad Blockchain Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">💎</span>
+        <span class="logo-text">Danger Tiles</span>
+      </div>
+      <div class="header-right">
+        <div class="network-badge">
+          <span class="network-dot"></span>
+          <span>Monad Testnet</span>
+        </div>
+        <button id="connectBtn" class="btn btn-primary">
+          <span class="btn-icon">🔗</span>
+          <span>Connect Wallet</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Hero Section -->
+      <section id="heroSection" class="hero">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            <span class="gradient-text">Avoid the Danger</span>
+            <br>Win the Pot
+          </h1>
+          <p class="hero-subtitle">
+            A thrilling blockchain tile game. Pick safe tiles, avoid the 2 hidden dangers, 
+            and claim your opponent's bet!
+          </p>
+          <div class="hero-stats">
+            <div class="stat-card">
+              <span class="stat-value" id="totalGames">0</span>
+              <span class="stat-label">Games Played</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="waitingGames">0</span>
+              <span class="stat-label">Waiting Lobbies</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lobby Section -->
+      <section id="lobbySection" class="lobby hidden">
+        <h2 class="section-title">Choose Your Stakes</h2>
+        <div class="tier-cards">
+          <div class="tier-card" data-tier="0">
+            <div class="tier-badge">Starter</div>
+            <div class="tier-bet">1 MON</div>
+            <div class="tier-fee">+ 1 MON fee</div>
+            <div class="tier-total">Total: 2 MON</div>
+            <div class="tier-waiting" id="tier0Waiting">
+              <span class="waiting-dot"></span>
+              <span>No one waiting</span>
+            </div>
+            <button class="btn btn-tier" data-tier="0">Join Game</button>
+          </div>
+          <div class="tier-card featured" data-tier="1">
+            <div class="tier-popular">Most Popular</div>
+            <div class="tier-badge">Standard</div>
+            <div class="tier-bet">5 MON</div>
+            <div class="tier-fee">+ 1 MON fee</div>
+            <div class="tier-total">Total: 6 MON</div>
+            <div class="tier-waiting" id="tier1Waiting">
+              <span class="waiting-dot"></span>
+              <span>No one waiting</span>
+            </div>
+            <button class="btn btn-tier" data-tier="1">Join Game</button>
+          </div>
+          <div class="tier-card" data-tier="2">
+            <div class="tier-badge">High Roller</div>
+            <div class="tier-bet">10 MON</div>
+            <div class="tier-fee">+ 1 MON fee</div>
+            <div class="tier-total">Total: 11 MON</div>
+            <div class="tier-waiting" id="tier2Waiting">
+              <span class="waiting-dot"></span>
+              <span>No one waiting</span>
+            </div>
+            <button class="btn btn-tier" data-tier="2">Join Game</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Section -->
+      <section id="gameSection" class="game hidden">
+        <div class="game-header">
+          <div class="game-info">
+            <span class="game-id">Game #<span id="currentGameId">0</span></span>
+            <span class="game-bet">Bet: <span id="currentBet">0</span> MON</span>
+          </div>
+          <div class="game-status" id="gameStatus">Waiting for opponent...</div>
+        </div>
+
+        <div class="game-players">
+          <div class="player player-1" id="player1Card">
+            <div class="player-avatar">👤</div>
+            <div class="player-address" id="player1Address">-</div>
+            <div class="player-label">Player 1</div>
+          </div>
+          <div class="vs-badge">VS</div>
+          <div class="player player-2" id="player2Card">
+            <div class="player-avatar">👤</div>
+            <div class="player-address" id="player2Address">-</div>
+            <div class="player-label">Player 2</div>
+          </div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+          <!-- 5x5 Grid - 25 tiles -->
+        </div>
+
+        <div class="game-actions">
+          <button id="leaveGameBtn" class="btn btn-secondary">Leave Game</button>
+        </div>
+      </section>
+
+      <!-- Result Modal -->
+      <div id="resultModal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-icon" id="resultIcon">🎉</div>
+          <h2 class="modal-title" id="resultTitle">You Won!</h2>
+          <p class="modal-message" id="resultMessage">You received 2 MON</p>
+          <button id="closeModalBtn" class="btn btn-primary">Back to Lobby</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
