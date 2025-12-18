@@ -10,202 +10,192 @@ let currentGameId = null;
 let pollInterval = null;
 
 // ============ DOM Elements ============
-const elements = {
-    connectBtn: document.getElementById('connectBtn'),
-    heroSection: document.getElementById('heroSection'),
-    lobbySection: document.getElementById('lobbySection'),
-    gameSection: document.getElementById('gameSection'),
-    resultModal: document.getElementById('resultModal'),
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const dom = {
+    connectBtn: $('#connectBtn'),
+    landingView: $('#landingView'),
+    lobbyView: $('#lobbyView'),
+    gameView: $('#gameView'),
+    playNowBtn: $('#playNowBtn'),
+    backToLanding: $('#backToLanding'),
 
     // Stats
-    totalGames: document.getElementById('totalGames'),
-    waitingGames: document.getElementById('waitingGames'),
+    statGames: $('#statGames'),
+    statWaiting: $('#statWaiting'),
 
-    // Tier waiting indicators
-    tier0Waiting: document.getElementById('tier0Waiting'),
-    tier1Waiting: document.getElementById('tier1Waiting'),
-    tier2Waiting: document.getElementById('tier2Waiting'),
+    // Stakes
+    stake0Status: $('#stake0Status'),
+    stake1Status: $('#stake1Status'),
+    stake2Status: $('#stake2Status'),
 
-    // Game elements
-    currentGameId: document.getElementById('currentGameId'),
-    currentBet: document.getElementById('currentBet'),
-    gameStatus: document.getElementById('gameStatus'),
-    player1Card: document.getElementById('player1Card'),
-    player2Card: document.getElementById('player2Card'),
-    player1Address: document.getElementById('player1Address'),
-    player2Address: document.getElementById('player2Address'),
-    gameBoard: document.getElementById('gameBoard'),
-    leaveGameBtn: document.getElementById('leaveGameBtn'),
+    // Game
+    gameId: $('#gameId'),
+    gamePot: $('#gamePot'),
+    gameState: $('#gameState'),
+    gameBoard: $('#gameBoard'),
+    boardOverlay: $('#boardOverlay'),
+    overlayText: $('#overlayText'),
+    p1Card: $('#p1Card'),
+    p2Card: $('#p2Card'),
+    p1Addr: $('#p1Addr'),
+    p2Addr: $('#p2Addr'),
+    p1You: $('#p1You'),
+    p2You: $('#p2You'),
+    exitGameBtn: $('#exitGameBtn'),
 
-    // Modal
-    resultIcon: document.getElementById('resultIcon'),
-    resultTitle: document.getElementById('resultTitle'),
-    resultMessage: document.getElementById('resultMessage'),
-    closeModalBtn: document.getElementById('closeModalBtn'),
+    // Result
+    resultOverlay: $('#resultOverlay'),
+    resultIcon: $('#resultIcon'),
+    resultTitle: $('#resultTitle'),
+    resultInfo: $('#resultInfo'),
+    resultBtn: $('#resultBtn'),
 
-    toastContainer: document.getElementById('toastContainer')
+    notifications: $('#notifications')
 };
 
-// ============ Initialization ============
-async function init() {
-    // Set up event listeners
-    elements.connectBtn.addEventListener('click', connectWallet);
-    elements.leaveGameBtn.addEventListener('click', leaveGame);
-    elements.closeModalBtn.addEventListener('click', closeModal);
+// ============ Initialize ============
+function init() {
+    createBoard();
+    bindEvents();
+    checkExistingConnection();
+}
 
-    // Tier button listeners
-    document.querySelectorAll('.btn-tier').forEach(btn => {
+function bindEvents() {
+    dom.connectBtn.addEventListener('click', connectWallet);
+    dom.playNowBtn.addEventListener('click', () => {
+        if (!userAddress) {
+            connectWallet();
+        } else {
+            showView('lobby');
+        }
+    });
+    dom.backToLanding.addEventListener('click', () => showView('landing'));
+    dom.exitGameBtn.addEventListener('click', exitGame);
+    dom.resultBtn.addEventListener('click', closeResult);
+
+    $$('.stake-btn').forEach(btn => {
         btn.addEventListener('click', () => joinGame(parseInt(btn.dataset.tier)));
     });
+}
 
-    // Check if already connected
+async function checkExistingConnection() {
     if (window.ethereum) {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
             await connectWallet();
         }
     }
-
-    // Create game board tiles
-    createGameBoard();
 }
 
-// ============ Wallet Connection ============
+// ============ Wallet ============
 async function connectWallet() {
     if (!window.ethereum) {
-        showToast('Please install MetaMask!', 'error');
+        notify('Please install MetaMask', 'error');
         return;
     }
 
     try {
-        // Request accounts
-        const accounts = await window.ethereum.request({
-            method: 'eth_requestAccounts'
-        });
-
-        // Setup provider and signer
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
         userAddress = accounts[0];
 
-        // Check network
+        // Check and switch network
         const network = await provider.getNetwork();
         if (Number(network.chainId) !== CONTRACT_CONFIG.chainId) {
-            await switchToMonad();
+            await switchNetwork();
         }
 
         // Setup contract
-        contract = new ethers.Contract(
-            CONTRACT_CONFIG.address,
-            CONTRACT_ABI,
-            signer
-        );
+        contract = new ethers.Contract(CONTRACT_CONFIG.address, CONTRACT_ABI, signer);
 
         // Update UI
-        elements.connectBtn.innerHTML = `
-      <span class="btn-icon">✓</span>
-      <span>${formatAddress(userAddress)}</span>
-    `;
+        dom.connectBtn.innerHTML = `<span class="connect-text">${truncate(userAddress)}</span>`;
+        dom.connectBtn.classList.add('connected');
 
-        // Show lobby
-        elements.heroSection.classList.add('hidden');
-        elements.lobbySection.classList.remove('hidden');
+        // Setup events
+        setupEvents();
 
-        // Setup event listeners
-        setupContractEvents();
-
-        // Check for active game
+        // Check active game
         await checkActiveGame();
 
-        // Update lobby stats
-        await updateLobbyStats();
-
-        // Start polling
+        // Update stats
+        await updateStats();
         startPolling();
 
-        showToast('Wallet connected!', 'success');
+        notify('Wallet connected', 'success');
 
-    } catch (error) {
-        console.error('Connection error:', error);
-        showToast('Failed to connect wallet', 'error');
+    } catch (err) {
+        console.error(err);
+        notify('Connection failed', 'error');
     }
 }
 
-async function switchToMonad() {
+async function switchNetwork() {
+    const chainIdHex = '0x' + CONTRACT_CONFIG.chainId.toString(16);
+
     try {
         await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${CONTRACT_CONFIG.chainId.toString(16)}` }]
+            params: [{ chainId: chainIdHex }]
         });
-    } catch (switchError) {
-        // Chain not added, add it
-        if (switchError.code === 4902) {
+    } catch (err) {
+        if (err.code === 4902) {
             await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
-                    chainId: `0x${CONTRACT_CONFIG.chainId.toString(16)}`,
+                    chainId: chainIdHex,
                     chainName: CONTRACT_CONFIG.chainName,
                     nativeCurrency: CONTRACT_CONFIG.currency,
                     rpcUrls: [CONTRACT_CONFIG.rpcUrl],
                     blockExplorerUrls: [CONTRACT_CONFIG.blockExplorer]
                 }]
             });
-        } else {
-            throw switchError;
         }
     }
 }
 
 // ============ Contract Events ============
-function setupContractEvents() {
-    contract.on('GameCreated', (gameId, player1, tier, betAmount) => {
-        console.log('GameCreated:', gameId, player1, tier);
-        updateLobbyStats();
-
+function setupEvents() {
+    contract.on('GameCreated', async (gameId, player1) => {
+        await updateStats();
         if (player1.toLowerCase() === userAddress.toLowerCase()) {
             currentGameId = Number(gameId);
-            showGameSection(currentGameId);
-            showToast('Game created! Waiting for opponent...', 'info');
+            showView('game');
+            await refreshGame();
+            notify('Game created - waiting for opponent', 'info');
         }
     });
 
-    contract.on('GameStarted', (gameId, player2) => {
-        console.log('GameStarted:', gameId, player2);
-
+    contract.on('GameStarted', async (gameId) => {
         if (Number(gameId) === currentGameId) {
-            elements.player2Address.textContent = formatAddress(player2);
-            elements.gameStatus.textContent = 'Waiting for VRF...';
-            showToast('Opponent joined! Generating random tiles...', 'info');
+            await refreshGame();
+            notify('Opponent joined!', 'success');
         }
     });
 
-    contract.on('DangerousTilesSet', (gameId) => {
-        console.log('DangerousTilesSet:', gameId);
-
+    contract.on('DangerousTilesSet', async (gameId) => {
         if (Number(gameId) === currentGameId) {
-            elements.gameStatus.textContent = 'Game in progress!';
-            refreshGameState();
-            showToast('Danger tiles set! Game started!', 'success');
+            await refreshGame();
+            notify('Game started!', 'success');
         }
     });
 
-    contract.on('MoveMade', (gameId, player, tile, hitDanger) => {
-        console.log('MoveMade:', gameId, player, tile, hitDanger);
-
+    contract.on('MoveMade', async (gameId, player, tile, hitDanger) => {
         if (Number(gameId) === currentGameId) {
             revealTile(Number(tile), hitDanger);
             if (!hitDanger) {
-                refreshGameState();
+                await refreshGame();
             }
         }
     });
 
     contract.on('GameFinished', async (gameId, winner, payout) => {
-        console.log('GameFinished:', gameId, winner, payout);
-
         if (Number(gameId) === currentGameId) {
-            const isWinner = winner.toLowerCase() === userAddress.toLowerCase();
-            showResult(isWinner, ethers.formatEther(payout));
+            const won = winner.toLowerCase() === userAddress.toLowerCase();
+            showResult(won, ethers.formatEther(payout));
         }
     });
 }
@@ -213,239 +203,225 @@ function setupContractEvents() {
 // ============ Game Actions ============
 async function joinGame(tier) {
     if (!contract) {
-        showToast('Please connect wallet first', 'error');
+        notify('Connect wallet first', 'error');
         return;
     }
 
     try {
-        const requiredPayment = await contract.getRequiredPayment(tier);
+        const payment = await contract.getRequiredPayment(tier);
+        notify(`Joining ${BET_AMOUNTS[tier]} MON game...`, 'info');
 
-        showToast(`Joining ${BET_AMOUNTS[tier]} MON game...`, 'info');
-
-        const tx = await contract.joinGame(tier, { value: requiredPayment });
+        const tx = await contract.joinGame(tier, { value: payment });
         await tx.wait();
-
-    } catch (error) {
-        console.error('Join game error:', error);
-        showToast(error.reason || 'Failed to join game', 'error');
+    } catch (err) {
+        console.error(err);
+        notify(err.reason || 'Transaction failed', 'error');
     }
 }
 
 async function makeMove(tile) {
-    if (!contract || currentGameId === null) return;
+    if (!contract || !currentGameId) return;
 
     try {
         const tx = await contract.makeMove(currentGameId, tile);
         await tx.wait();
-    } catch (error) {
-        console.error('Move error:', error);
-        showToast(error.reason || 'Failed to make move', 'error');
+    } catch (err) {
+        console.error(err);
+        notify(err.reason || 'Move failed', 'error');
     }
 }
 
-function leaveGame() {
+function exitGame() {
     currentGameId = null;
-    elements.gameSection.classList.add('hidden');
-    elements.lobbySection.classList.remove('hidden');
-    resetGameBoard();
+    showView('lobby');
+    resetBoard();
 }
 
 // ============ UI Updates ============
+function showView(view) {
+    dom.landingView.classList.add('hidden');
+    dom.lobbyView.classList.add('hidden');
+    dom.gameView.classList.add('hidden');
+
+    if (view === 'landing') dom.landingView.classList.remove('hidden');
+    if (view === 'lobby') {
+        dom.lobbyView.classList.remove('hidden');
+        updateStats();
+    }
+    if (view === 'game') dom.gameView.classList.remove('hidden');
+}
+
 async function checkActiveGame() {
     try {
-        const activeGameId = await contract.playerActiveGame(userAddress);
-        if (Number(activeGameId) > 0) {
-            const game = await contract.getGame(activeGameId);
+        const gameId = await contract.playerActiveGame(userAddress);
+        if (Number(gameId) > 0) {
+            const game = await contract.getGame(gameId);
             if (Number(game.state) !== GameState.Finished) {
-                currentGameId = Number(activeGameId);
-                showGameSection(currentGameId);
+                currentGameId = Number(gameId);
+                showView('game');
+                await refreshGame();
+                return;
             }
         }
-    } catch (error) {
-        console.error('Check active game error:', error);
+        showView('lobby');
+    } catch (err) {
+        console.error(err);
+        showView('lobby');
     }
 }
 
-async function updateLobbyStats() {
+async function updateStats() {
+    if (!contract) return;
+
     try {
-        const totalGames = await contract.gameCounter();
-        elements.totalGames.textContent = Number(totalGames);
+        const total = await contract.gameCounter();
+        dom.statGames.textContent = Number(total);
 
-        let waitingCount = 0;
-
+        let waiting = 0;
         for (let tier = 0; tier <= 2; tier++) {
-            const waitingGameId = await contract.getWaitingGame(tier);
-            const hasWaiting = Number(waitingGameId) > 0;
+            const gameId = await contract.getWaitingGame(tier);
+            const hasWaiting = Number(gameId) > 0;
 
-            const waitingEl = document.getElementById(`tier${tier}Waiting`);
+            const statusEl = $(`#stake${tier}Status`);
             if (hasWaiting) {
-                waitingEl.classList.add('has-player');
-                waitingEl.querySelector('span:last-child').textContent = 'Player waiting!';
-                waitingCount++;
+                statusEl.classList.add('waiting');
+                statusEl.querySelector('.status-text').textContent = 'Player waiting';
+                waiting++;
             } else {
-                waitingEl.classList.remove('has-player');
-                waitingEl.querySelector('span:last-child').textContent = 'No one waiting';
+                statusEl.classList.remove('waiting');
+                statusEl.querySelector('.status-text').textContent = 'Empty lobby';
             }
         }
-
-        elements.waitingGames.textContent = waitingCount;
-
-    } catch (error) {
-        console.error('Update lobby stats error:', error);
+        dom.statWaiting.textContent = waiting;
+    } catch (err) {
+        console.error(err);
     }
 }
 
-async function showGameSection(gameId) {
-    elements.lobbySection.classList.add('hidden');
-    elements.gameSection.classList.remove('hidden');
-
-    await refreshGameState();
-}
-
-async function refreshGameState() {
-    if (currentGameId === null) return;
+async function refreshGame() {
+    if (!currentGameId) return;
 
     try {
         const game = await contract.getGame(currentGameId);
 
-        // Update game info
-        elements.currentGameId.textContent = currentGameId;
-        elements.currentBet.textContent = ethers.formatEther(game.betAmount);
+        // Update meta
+        dom.gameId.textContent = `#${currentGameId}`;
+        const potMon = Number(ethers.formatEther(game.betAmount)) * 2;
+        dom.gamePot.textContent = `${potMon} MON`;
 
-        // Update players
-        elements.player1Address.textContent = formatAddress(game.player1);
-        elements.player2Address.textContent = game.player2 !== ethers.ZeroAddress
-            ? formatAddress(game.player2)
-            : 'Waiting...';
+        // Players
+        const isP1 = game.player1.toLowerCase() === userAddress.toLowerCase();
+        dom.p1Addr.textContent = truncate(game.player1);
+        dom.p2Addr.textContent = game.player2 !== ethers.ZeroAddress ? truncate(game.player2) : 'Waiting...';
 
-        // Highlight current player and your card
-        const isPlayer1 = game.player1.toLowerCase() === userAddress.toLowerCase();
+        dom.p1Card.classList.toggle('is-you', isP1);
+        dom.p2Card.classList.toggle('is-you', !isP1 && game.player2 !== ethers.ZeroAddress);
+
+        // Current turn
         const isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
+        const isP1Turn = game.currentTurn.toLowerCase() === game.player1.toLowerCase();
 
-        elements.player1Card.classList.toggle('is-you', isPlayer1);
-        elements.player2Card.classList.toggle('is-you', !isPlayer1);
+        dom.p1Card.classList.toggle('active', Number(game.state) === GameState.InProgress && isP1Turn);
+        dom.p2Card.classList.toggle('active', Number(game.state) === GameState.InProgress && !isP1Turn);
 
-        elements.player1Card.classList.toggle('active',
-            Number(game.state) === GameState.InProgress &&
-            game.currentTurn.toLowerCase() === game.player1.toLowerCase()
-        );
-        elements.player2Card.classList.toggle('active',
-            Number(game.state) === GameState.InProgress &&
-            game.currentTurn.toLowerCase() === game.player2.toLowerCase()
-        );
-
-        // Update status
-        const stateMessages = {
-            [GameState.WaitingForPlayer]: 'Waiting for opponent...',
-            [GameState.WaitingForVRF]: 'Generating random tiles...',
-            [GameState.InProgress]: isMyTurn ? '🎯 Your turn!' : "Opponent's turn...",
-            [GameState.Finished]: 'Game finished!'
+        // State
+        const stateText = {
+            [GameState.WaitingForPlayer]: 'Waiting for opponent',
+            [GameState.WaitingForVRF]: 'Generating tiles...',
+            [GameState.InProgress]: isMyTurn ? 'Your turn' : "Opponent's turn",
+            [GameState.Finished]: 'Game over'
         };
-        elements.gameStatus.textContent = stateMessages[Number(game.state)];
 
-        // Update board
-        updateBoardState(game);
+        dom.gameState.textContent = stateText[Number(game.state)];
+        dom.gameState.classList.toggle('your-turn', Number(game.state) === GameState.InProgress && isMyTurn);
 
-    } catch (error) {
-        console.error('Refresh game state error:', error);
+        // Board overlay
+        const showOverlay = Number(game.state) === GameState.WaitingForPlayer || Number(game.state) === GameState.WaitingForVRF;
+        dom.boardOverlay.classList.toggle('visible', showOverlay);
+        dom.overlayText.textContent = stateText[Number(game.state)];
+
+        // Update tiles
+        updateBoard(game);
+
+    } catch (err) {
+        console.error(err);
     }
 }
 
-function updateBoardState(game) {
+function updateBoard(game) {
     const isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
-    const isInProgress = Number(game.state) === GameState.InProgress;
+    const isActive = Number(game.state) === GameState.InProgress;
 
-    const tiles = document.querySelectorAll('.tile');
-    tiles.forEach((tile, index) => {
-        const isRevealed = (BigInt(game.revealedTiles) & (1n << BigInt(index))) !== 0n;
-
-        tile.classList.toggle('revealed', isRevealed);
-        tile.classList.toggle('disabled', !isInProgress || !isMyTurn || isRevealed);
-
-        if (isRevealed && !tile.classList.contains('safe') && !tile.classList.contains('danger')) {
-            tile.classList.add('safe');
-            tile.textContent = '✓';
-        }
+    $$('.tile').forEach((tile, i) => {
+        const revealed = (BigInt(game.revealedTiles) & (1n << BigInt(i))) !== 0n;
+        tile.classList.toggle('revealed', revealed);
+        tile.classList.toggle('disabled', !isActive || !isMyTurn || revealed);
     });
 }
 
-function revealTile(tileIndex, isDanger) {
-    const tile = document.querySelectorAll('.tile')[tileIndex];
+function revealTile(index, isDanger) {
+    const tile = $$('.tile')[index];
     tile.classList.add('revealed');
-    tile.classList.remove('disabled');
-
-    if (isDanger) {
-        tile.classList.add('danger');
-        tile.textContent = '💀';
-    } else {
-        tile.classList.add('safe');
-        tile.textContent = '✓';
-    }
+    tile.classList.add(isDanger ? 'danger' : 'safe');
 }
 
-function createGameBoard() {
-    elements.gameBoard.innerHTML = '';
+function createBoard() {
+    dom.gameBoard.innerHTML = '';
     for (let i = 0; i < 25; i++) {
         const tile = document.createElement('button');
         tile.className = 'tile disabled';
-        tile.dataset.index = i;
         tile.addEventListener('click', () => {
             if (!tile.classList.contains('disabled') && !tile.classList.contains('revealed')) {
                 makeMove(i);
             }
         });
-        elements.gameBoard.appendChild(tile);
+        dom.gameBoard.appendChild(tile);
     }
 }
 
-function resetGameBoard() {
-    const tiles = document.querySelectorAll('.tile');
-    tiles.forEach(tile => {
+function resetBoard() {
+    $$('.tile').forEach(tile => {
         tile.className = 'tile disabled';
-        tile.textContent = '';
     });
 }
 
-function showResult(isWinner, payout) {
-    elements.resultIcon.textContent = isWinner ? '🎉' : '💀';
-    elements.resultTitle.textContent = isWinner ? 'You Won!' : 'You Lost!';
-    elements.resultMessage.textContent = isWinner
-        ? `You received ${payout} MON`
-        : 'Better luck next time!';
-
-    elements.resultModal.classList.remove('hidden');
+function showResult(won, payout) {
+    dom.resultIcon.textContent = won ? '🏆' : '💀';
+    dom.resultTitle.textContent = won ? 'Victory!' : 'Defeated';
+    dom.resultTitle.className = `result-title ${won ? 'win' : 'lose'}`;
+    dom.resultInfo.textContent = won ? `You won ${payout} MON` : 'Better luck next time';
+    dom.resultOverlay.classList.remove('hidden');
 }
 
-function closeModal() {
-    elements.resultModal.classList.add('hidden');
-    leaveGame();
-    updateLobbyStats();
+function closeResult() {
+    dom.resultOverlay.classList.add('hidden');
+    currentGameId = null;
+    showView('lobby');
+    resetBoard();
+    updateStats();
 }
 
 // ============ Helpers ============
-function formatAddress(address) {
-    if (!address || address === ethers.ZeroAddress) return '-';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+function truncate(addr) {
+    if (!addr || addr === ethers.ZeroAddress) return '-';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
+function notify(message, type = 'info') {
+    const el = document.createElement('div');
+    el.className = `notification ${type}`;
+    el.innerHTML = `<span class="notification-text">${message}</span>`;
+    dom.notifications.appendChild(el);
 
-    elements.toastContainer.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 4000);
+    setTimeout(() => el.remove(), 4000);
 }
 
 function startPolling() {
     pollInterval = setInterval(() => {
-        if (currentGameId !== null) {
-            refreshGameState();
+        if (currentGameId) {
+            refreshGame();
         } else {
-            updateLobbyStats();
+            updateStats();
         }
     }, 5000);
 }
