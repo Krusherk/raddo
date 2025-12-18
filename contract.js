@@ -1,18 +1,18 @@
 // Contract configuration
 export const CONTRACT_CONFIG = {
-  // Update this after deployment!
-  address: '0x0000000000000000000000000000000000000000',
-  
+  // Deployed on Monad Testnet
+  address: '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4',
+
   chainId: 10143,
   chainName: 'Monad Testnet',
-  rpcUrl: 'https://rpc-testnet.monadinfra.com',
-  
+  rpcUrl: 'https://testnet-rpc.monad.xyz',
+
   currency: {
     name: 'MON',
     symbol: 'MON',
     decimals: 18
   },
-  
+
   blockExplorer: 'https://testnet.monadexplorer.com'
 };
 
@@ -25,11 +25,11 @@ export const CONTRACT_ABI = [
   "event DangerousTilesSet(uint256 indexed gameId)",
   "event MoveMade(uint256 indexed gameId, address indexed player, uint8 tile, bool hitDanger)",
   "event GameFinished(uint256 indexed gameId, address indexed winner, uint256 payout)",
-  
+
   // Write functions
   "function joinGame(uint8 tier) external payable",
   "function makeMove(uint256 gameId, uint8 tile) external",
-  
+
   // Read functions
   "function getGame(uint256 gameId) external view returns (address player1, address player2, uint8 tier, uint256 betAmount, uint8 state, address currentTurn, address winner, uint256 revealedTiles)",
   "function getWaitingGame(uint8 tier) external view returns (uint256)",
@@ -38,7 +38,7 @@ export const CONTRACT_ABI = [
   "function getDangerousTiles(uint256 gameId) external view returns (uint8, uint8)",
   "function gameCounter() external view returns (uint256)",
   "function playerActiveGame(address player) external view returns (uint256)",
-  
+
   // Constants
   "function GRID_SIZE() external pure returns (uint256)",
   "function PLATFORM_FEE() external pure returns (uint256)"
