@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TAKKOFUN - A thrilling blockchain tile game on Monad">
     <title>TAKKOFUN | Monad</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +11,6 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="index.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
 </head>
 
 <body>
@@ -21,7 +19,6 @@
     <div class="glow glow-2"></div>
 
     <div id="app">
-        <!-- Navigation -->
         <nav class="nav">
             <div class="nav-brand">
                 <div class="brand-icon">
@@ -35,7 +32,7 @@
             </div>
 
             <div class="nav-center">
-                <a href="#how-it-works" class="nav-link" id="howItWorksLink">How it Works</a>
+                <a href="#" class="nav-link" id="howItWorksLink">How it Works</a>
                 <a href="https://x.com/takkofun" target="_blank" class="nav-link nav-twitter">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                         <path
@@ -61,68 +58,33 @@
                         </svg>
                     </button>
                     <div class="wallet-dropdown hidden" id="walletDropdown">
-                        <button class="dropdown-item" id="copyAddressBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                            </svg>
-                            Copy Address
-                        </button>
-                        <button class="dropdown-item" id="disconnectBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                            Disconnect
-                        </button>
+                        <button class="dropdown-item" id="copyAddressBtn">Copy Address</button>
+                        <button class="dropdown-item" id="disconnectBtn">Disconnect</button>
                     </div>
                 </div>
             </div>
         </nav>
 
-        <!-- Main Content -->
         <main class="main">
-            <!-- Landing View -->
             <section id="landingView" class="view landing">
                 <div class="landing-content">
                     <div class="landing-badge">LIVE ON MONAD</div>
-                    <h1 class="landing-title">
-                        Step carefully.<br>
-                        <span class="title-highlight">Win big.</span>
-                    </h1>
-                    <p class="landing-desc">
-                        25 tiles. 2 are lethal. Take turns picking tiles with your opponent.
-                        Hit a danger tile and lose your bet. Last one standing takes the pot.
-                    </p>
-
+                    <h1 class="landing-title">Step carefully.<br><span class="title-highlight">Win big.</span></h1>
+                    <p class="landing-desc">25 tiles. 2 are lethal. Take turns picking tiles with your opponent. Hit a
+                        danger tile and lose your bet. Last one standing takes the pot.</p>
                     <div class="landing-cta">
-                        <button id="playNowBtn" class="btn-play">
-                            <span>Play Now</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="5 3 19 12 5 21 5 3" />
-                            </svg>
-                        </button>
+                        <button id="playNowBtn" class="btn-play"><span>Play Now</span></button>
                     </div>
-
                     <div class="landing-stats">
-                        <div class="stat">
-                            <span class="stat-num" id="statGames">0</span>
-                            <span class="stat-label">Games</span>
-                        </div>
+                        <div class="stat"><span class="stat-num" id="statGames">0</span><span
+                                class="stat-label">Games</span></div>
                         <div class="stat-divider"></div>
-                        <div class="stat">
-                            <span class="stat-num" id="statWaiting">0</span>
-                            <span class="stat-label">Waiting</span>
-                        </div>
+                        <div class="stat"><span class="stat-num" id="statWaiting">0</span><span
+                                class="stat-label">Waiting</span></div>
                         <div class="stat-divider"></div>
-                        <div class="stat">
-                            <span class="stat-num">2x</span>
-                            <span class="stat-label">Payout</span>
-                        </div>
+                        <div class="stat"><span class="stat-num">2x</span><span class="stat-label">Payout</span></div>
                     </div>
                 </div>
-
                 <div class="landing-visual">
                     <div class="grid-preview">
                         <div class="preview-tile"></div>
@@ -145,213 +107,123 @@
                 </div>
             </section>
 
-            <!-- How It Works Section -->
             <section id="howItWorksView" class="view how-it-works hidden">
-                <button id="backFromHowItWorks" class="btn-back">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="19" y1="12" x2="5" y2="12" />
-                        <polyline points="12 19 5 12 12 5" />
-                    </svg>
-                    Back
-                </button>
-
+                <button id="backFromHowItWorks" class="btn-back">Back</button>
                 <h2 class="section-title">How It Works</h2>
-
                 <div class="steps-grid">
                     <div class="step-card">
                         <div class="step-number">1</div>
                         <h3>Connect Wallet</h3>
-                        <p>Connect your MetaMask wallet with MON tokens on Monad Testnet.</p>
+                        <p>Connect your MetaMask with MON on Monad Testnet.</p>
                     </div>
-
                     <div class="step-card">
                         <div class="step-number">2</div>
                         <h3>Choose Stakes</h3>
-                        <p>Select a tier: 1, 5, or 10 MON. You'll be matched with a player in the same tier.</p>
+                        <p>Select 1, 5, or 10 MON tier.</p>
                     </div>
-
                     <div class="step-card">
                         <div class="step-number">3</div>
                         <h3>Wait for Match</h3>
-                        <p>Either wait for an opponent, or join an existing game. VRF generates 2 hidden danger tiles.
-                        </p>
+                        <p>Join or create a game. VRF sets hidden danger tiles.</p>
                     </div>
-
                     <div class="step-card">
                         <div class="step-number">4</div>
                         <h3>Take Turns</h3>
-                        <p>Click tiles in turn. Safe tiles are revealed. Hit a danger tile and you lose!</p>
+                        <p>Click tiles. Hit danger = you lose!</p>
                     </div>
-
                     <div class="step-card">
                         <div class="step-number">5</div>
                         <h3>Win the Pot</h3>
-                        <p>Last player standing wins 2x the bet amount. Payouts are instant and automatic.</p>
-                    </div>
-                </div>
-
-                <div class="info-cards">
-                    <div class="info-card">
-                        <h4>💰 Fee Structure</h4>
-                        <p>Each player pays bet + 1 MON fee. The fee covers VRF randomness and platform costs.</p>
-                    </div>
-                    <div class="info-card">
-                        <h4>🎲 Provably Fair</h4>
-                        <p>Danger tiles are set by Pyth Entropy VRF - verifiable on-chain randomness.</p>
-                    </div>
-                    <div class="info-card">
-                        <h4>⚡ Monad Speed</h4>
-                        <p>Built on Monad Testnet for fast, low-cost transactions.</p>
+                        <p>Last standing wins 2x bet. Instant payout.</p>
                     </div>
                 </div>
             </section>
 
-            <!-- Lobby View -->
             <section id="lobbyView" class="view lobby hidden">
                 <div class="lobby-header">
                     <h2 class="lobby-title">Select Stakes</h2>
-                    <p class="lobby-subtitle">Players are matched within the same tier</p>
+                    <p class="lobby-subtitle">Players matched within same tier</p>
                 </div>
-
                 <div class="stakes-grid">
-                    <div class="stake-card" data-tier="0">
+                    <div class="stake-card">
                         <div class="stake-tier">TIER 1</div>
-                        <div class="stake-amount">
-                            <span class="amount-value">1</span>
-                            <span class="amount-currency">MON</span>
-                        </div>
+                        <div class="stake-amount"><span class="amount-value">1</span><span
+                                class="amount-currency">MON</span></div>
                         <div class="stake-details">
-                            <div class="detail-row">
-                                <span>Entry fee</span>
-                                <span>+1 MON</span>
-                            </div>
-                            <div class="detail-row total">
-                                <span>Total</span>
-                                <span>2 MON</span>
-                            </div>
+                            <div class="detail-row"><span>Entry fee</span><span>+1 MON</span></div>
+                            <div class="detail-row total"><span>Total</span><span>2 MON</span></div>
                         </div>
-                        <div class="stake-status" id="stake0Status">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Empty lobby</span>
-                        </div>
+                        <div class="stake-status" id="stake0Status"><span class="status-dot"></span><span
+                                class="status-text">Empty lobby</span></div>
                         <button class="stake-btn" data-tier="0">Enter Game</button>
                     </div>
-
-                    <div class="stake-card featured" data-tier="1">
+                    <div class="stake-card featured">
                         <div class="stake-badge">POPULAR</div>
                         <div class="stake-tier">TIER 2</div>
-                        <div class="stake-amount">
-                            <span class="amount-value">5</span>
-                            <span class="amount-currency">MON</span>
-                        </div>
+                        <div class="stake-amount"><span class="amount-value">5</span><span
+                                class="amount-currency">MON</span></div>
                         <div class="stake-details">
-                            <div class="detail-row">
-                                <span>Entry fee</span>
-                                <span>+1 MON</span>
-                            </div>
-                            <div class="detail-row total">
-                                <span>Total</span>
-                                <span>6 MON</span>
-                            </div>
+                            <div class="detail-row"><span>Entry fee</span><span>+1 MON</span></div>
+                            <div class="detail-row total"><span>Total</span><span>6 MON</span></div>
                         </div>
-                        <div class="stake-status" id="stake1Status">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Empty lobby</span>
-                        </div>
+                        <div class="stake-status" id="stake1Status"><span class="status-dot"></span><span
+                                class="status-text">Empty lobby</span></div>
                         <button class="stake-btn" data-tier="1">Enter Game</button>
                     </div>
-
-                    <div class="stake-card" data-tier="2">
+                    <div class="stake-card">
                         <div class="stake-tier">TIER 3</div>
-                        <div class="stake-amount">
-                            <span class="amount-value">10</span>
-                            <span class="amount-currency">MON</span>
-                        </div>
+                        <div class="stake-amount"><span class="amount-value">10</span><span
+                                class="amount-currency">MON</span></div>
                         <div class="stake-details">
-                            <div class="detail-row">
-                                <span>Entry fee</span>
-                                <span>+1 MON</span>
-                            </div>
-                            <div class="detail-row total">
-                                <span>Total</span>
-                                <span>11 MON</span>
-                            </div>
+                            <div class="detail-row"><span>Entry fee</span><span>+1 MON</span></div>
+                            <div class="detail-row total"><span>Total</span><span>11 MON</span></div>
                         </div>
-                        <div class="stake-status" id="stake2Status">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Empty lobby</span>
-                        </div>
+                        <div class="stake-status" id="stake2Status"><span class="status-dot"></span><span
+                                class="status-text">Empty lobby</span></div>
                         <button class="stake-btn" data-tier="2">Enter Game</button>
                     </div>
                 </div>
-
-                <button id="backToLanding" class="btn-back">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="19" y1="12" x2="5" y2="12" />
-                        <polyline points="12 19 5 12 12 5" />
-                    </svg>
-                    Back
-                </button>
+                <button id="backToLanding" class="btn-back">Back</button>
             </section>
 
-            <!-- Game View -->
             <section id="gameView" class="view game hidden">
                 <div class="game-top">
-                    <div class="game-meta">
-                        <span class="meta-item">
-                            <span class="meta-label">GAME</span>
-                            <span class="meta-value" id="gameId">#0</span>
-                        </span>
-                        <span class="meta-divider">|</span>
-                        <span class="meta-item">
-                            <span class="meta-label">POT</span>
-                            <span class="meta-value" id="gamePot">0 MON</span>
-                        </span>
-                    </div>
+                    <div class="game-meta"><span class="meta-item"><span class="meta-label">GAME</span><span
+                                class="meta-value" id="gameId">#0</span></span><span class="meta-divider">|</span><span
+                            class="meta-item"><span class="meta-label">POT</span><span class="meta-value" id="gamePot">0
+                                MON</span></span></div>
                     <div class="game-state" id="gameState">Waiting for opponent</div>
                 </div>
-
                 <div class="game-arena">
                     <div class="player-panel left">
                         <div class="player-card" id="p1Card">
                             <div class="player-indicator"></div>
-                            <div class="player-info">
-                                <span class="player-label">Player 1</span>
-                                <span class="player-addr" id="p1Addr">-</span>
-                            </div>
-                            <div class="player-you" id="p1You">YOU</div>
+                            <div class="player-info"><span class="player-label">Player 1</span><span class="player-addr"
+                                    id="p1Addr">-</span></div>
+                            <div class="player-you">YOU</div>
                         </div>
                     </div>
-
                     <div class="board-container">
                         <div class="board" id="gameBoard"></div>
                         <div class="board-overlay" id="boardOverlay">
                             <div class="overlay-content">
-                                <div class="spinner"></div>
-                                <span id="overlayText">Waiting...</span>
+                                <div class="spinner"></div><span id="overlayText">Waiting...</span>
                             </div>
                         </div>
                     </div>
-
                     <div class="player-panel right">
                         <div class="player-card" id="p2Card">
                             <div class="player-indicator"></div>
-                            <div class="player-info">
-                                <span class="player-label">Player 2</span>
-                                <span class="player-addr" id="p2Addr">-</span>
-                            </div>
-                            <div class="player-you" id="p2You">YOU</div>
+                            <div class="player-info"><span class="player-label">Player 2</span><span class="player-addr"
+                                    id="p2Addr">-</span></div>
+                            <div class="player-you">YOU</div>
                         </div>
                     </div>
                 </div>
-
-                <div class="game-bottom">
-                    <button id="exitGameBtn" class="btn-exit">Exit Game</button>
-                </div>
+                <div class="game-bottom"><button id="exitGameBtn" class="btn-exit">Exit Game</button></div>
             </section>
         </main>
 
-        <!-- Result Overlay -->
         <div id="resultOverlay" class="result-overlay hidden">
             <div class="result-card">
                 <div class="result-icon" id="resultIcon">🏆</div>
@@ -361,11 +233,626 @@
             </div>
         </div>
 
-        <!-- Notifications -->
         <div id="notifications" class="notifications"></div>
     </div>
 
-    <script src="main.js"></script>
+    <!-- ethers.js v6 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
+
+    <script>
+        // Wait for ethers to load
+        (function () {
+            'use strict';
+
+            // Config
+            var CONTRACT_ADDRESS = '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4';
+            var CHAIN_ID = 10143;
+            var CHAIN_NAME = 'Monad Testnet';
+            var RPC_URL = 'https://testnet-rpc.monad.xyz';
+            var EXPLORER = 'https://testnet.monadexplorer.com';
+
+            var CONTRACT_ABI = [
+                "event GameCreated(uint256 indexed gameId, address indexed player1, uint8 tier, uint256 betAmount)",
+                "event GameStarted(uint256 indexed gameId, address indexed player2)",
+                "event DangerousTilesSet(uint256 indexed gameId)",
+                "event MoveMade(uint256 indexed gameId, address indexed player, uint8 tile, bool hitDanger)",
+                "event GameFinished(uint256 indexed gameId, address indexed winner, uint256 payout)",
+                "function joinGame(uint8 tier) external payable",
+                "function makeMove(uint256 gameId, uint8 tile) external",
+                "function getGame(uint256 gameId) external view returns (address player1, address player2, uint8 tier, uint256 betAmount, uint8 state, address currentTurn, address winner, uint256 revealedTiles)",
+                "function getWaitingGame(uint8 tier) external view returns (uint256)",
+                "function getRequiredPayment(uint8 tier) external pure returns (uint256)",
+                "function gameCounter() external view returns (uint256)",
+                "function playerActiveGame(address player) external view returns (uint256)"
+            ];
+
+            var BET_AMOUNTS = [1, 5, 10];
+
+            // State
+            var provider = null;
+            var signer = null;
+            var contract = null;
+            var userAddress = null;
+            var currentGameId = null;
+            var dropdownOpen = false;
+
+            // DOM helper
+            function $(id) { return document.getElementById(id); }
+            function $$(sel) { return document.querySelectorAll(sel); }
+
+            // Init
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log('DOM loaded');
+                console.log('ethers available:', typeof ethers !== 'undefined');
+
+                if (typeof ethers === 'undefined') {
+                    alert('Error: ethers.js not loaded. Please check your internet connection.');
+                    return;
+                }
+
+                createBoard();
+                bindEvents();
+                checkExistingConnection();
+            });
+
+            function bindEvents() {
+                console.log('Binding events');
+
+                var connectBtn = $('connectBtn');
+                console.log('Connect button:', connectBtn);
+
+                if (connectBtn) {
+                    connectBtn.onclick = function (e) {
+                        e.preventDefault();
+                        console.log('Connect button clicked');
+                        handleWalletClick();
+                    };
+                }
+
+                var playNowBtn = $('playNowBtn');
+                if (playNowBtn) {
+                    playNowBtn.onclick = function (e) {
+                        e.preventDefault();
+                        if (!userAddress) { connectWallet(); }
+                        else { showView('lobby'); }
+                    };
+                }
+
+                var copyAddressBtn = $('copyAddressBtn');
+                if (copyAddressBtn) {
+                    copyAddressBtn.onclick = copyAddress;
+                }
+
+                var disconnectBtn = $('disconnectBtn');
+                if (disconnectBtn) {
+                    disconnectBtn.onclick = disconnectWallet;
+                }
+
+                var howItWorksLink = $('howItWorksLink');
+                if (howItWorksLink) {
+                    howItWorksLink.onclick = function (e) {
+                        e.preventDefault();
+                        showView('howItWorks');
+                    };
+                }
+
+                var backFromHowItWorks = $('backFromHowItWorks');
+                if (backFromHowItWorks) {
+                    backFromHowItWorks.onclick = function () { showView('landing'); };
+                }
+
+                var backToLanding = $('backToLanding');
+                if (backToLanding) {
+                    backToLanding.onclick = function () { showView('landing'); };
+                }
+
+                var exitGameBtn = $('exitGameBtn');
+                if (exitGameBtn) {
+                    exitGameBtn.onclick = exitGame;
+                }
+
+                var resultBtn = $('resultBtn');
+                if (resultBtn) {
+                    resultBtn.onclick = closeResult;
+                }
+
+                // Stake buttons
+                var stakeBtns = $$('.stake-btn');
+                for (var i = 0; i < stakeBtns.length; i++) {
+                    (function (btn) {
+                        btn.onclick = function () {
+                            var tier = parseInt(btn.getAttribute('data-tier'));
+                            joinGame(tier);
+                        };
+                    })(stakeBtns[i]);
+                }
+
+                // Close dropdown on outside click
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.wallet-wrapper') && dropdownOpen) {
+                        closeDropdown();
+                    }
+                });
+
+                console.log('Events bound');
+            }
+
+            function handleWalletClick() {
+                console.log('handleWalletClick, userAddress:', userAddress);
+                if (userAddress) {
+                    toggleDropdown();
+                } else {
+                    connectWallet();
+                }
+            }
+
+            function toggleDropdown() {
+                dropdownOpen = !dropdownOpen;
+                var dropdown = $('walletDropdown');
+                if (dropdown) {
+                    if (dropdownOpen) {
+                        dropdown.classList.remove('hidden');
+                    } else {
+                        dropdown.classList.add('hidden');
+                    }
+                }
+            }
+
+            function closeDropdown() {
+                dropdownOpen = false;
+                var dropdown = $('walletDropdown');
+                if (dropdown) { dropdown.classList.add('hidden'); }
+            }
+
+            function copyAddress() {
+                if (userAddress) {
+                    navigator.clipboard.writeText(userAddress);
+                    notify('Address copied!', 'success');
+                    closeDropdown();
+                }
+            }
+
+            function disconnectWallet() {
+                userAddress = null;
+                provider = null;
+                signer = null;
+                contract = null;
+                currentGameId = null;
+
+                var btn = $('connectBtn');
+                if (btn) {
+                    btn.innerHTML = '<span class="connect-text">Connect</span>';
+                    btn.classList.remove('connected');
+                }
+
+                var balanceDisplay = $('balanceDisplay');
+                if (balanceDisplay) { balanceDisplay.classList.add('hidden'); }
+
+                closeDropdown();
+                showView('landing');
+                notify('Disconnected', 'info');
+            }
+
+            async function connectWallet() {
+                console.log('connectWallet called');
+
+                if (typeof window.ethereum === 'undefined') {
+                    notify('Please install MetaMask!', 'error');
+                    alert('MetaMask not found! Please install MetaMask browser extension.');
+                    return;
+                }
+
+                try {
+                    notify('Connecting...', 'info');
+                    console.log('Requesting accounts...');
+
+                    var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log('Accounts:', accounts);
+
+                    if (!accounts || accounts.length === 0) {
+                        throw new Error('No accounts returned');
+                    }
+
+                    userAddress = accounts[0];
+                    console.log('User address:', userAddress);
+
+                    // Create provider using ethers v6 BrowserProvider
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    console.log('Provider created');
+
+                    signer = await provider.getSigner();
+                    console.log('Signer obtained');
+
+                    // Check network
+                    var network = await provider.getNetwork();
+                    console.log('Network chainId:', network.chainId);
+
+                    if (Number(network.chainId) !== CHAIN_ID) {
+                        console.log('Wrong network, switching...');
+                        await switchNetwork();
+                        // Refresh provider after switch
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                        signer = await provider.getSigner();
+                    }
+
+                    // Create contract
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    console.log('Contract created');
+
+                    // Update UI
+                    var btn = $('connectBtn');
+                    if (btn) {
+                        btn.innerHTML = '<span class="connect-text">' + truncate(userAddress) + '</span>';
+                        btn.classList.add('connected');
+                    }
+
+                    await updateBalance();
+                    setupEvents();
+                    await checkActiveGame();
+                    await updateStats();
+
+                    // Start polling
+                    setInterval(function () {
+                        if (currentGameId) { refreshGame(); }
+                        else { updateStats(); }
+                        updateBalance();
+                    }, 5000);
+
+                    notify('Connected!', 'success');
+
+                } catch (err) {
+                    console.error('Connection error:', err);
+                    notify(err.message || 'Connection failed', 'error');
+                }
+            }
+
+            async function checkExistingConnection() {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        var accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (accounts && accounts.length > 0) {
+                            await connectWallet();
+                        }
+                    } catch (e) {
+                        console.log('No existing connection');
+                    }
+                }
+            }
+
+            async function updateBalance() {
+                if (!provider || !userAddress) return;
+                try {
+                    var balance = await provider.getBalance(userAddress);
+                    var formatted = parseFloat(ethers.formatEther(balance)).toFixed(2);
+                    var el = $('balanceValue');
+                    if (el) { el.textContent = formatted; }
+                    var display = $('balanceDisplay');
+                    if (display) { display.classList.remove('hidden'); }
+                } catch (err) {
+                    console.error('Balance error:', err);
+                }
+            }
+
+            async function switchNetwork() {
+                var chainIdHex = '0x' + CHAIN_ID.toString(16);
+
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: chainIdHex }]
+                    });
+                } catch (err) {
+                    if (err.code === 4902) {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: chainIdHex,
+                                chainName: CHAIN_NAME,
+                                nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+                                rpcUrls: [RPC_URL],
+                                blockExplorerUrls: [EXPLORER]
+                            }]
+                        });
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+
+            function setupEvents() {
+                if (!contract) return;
+
+                contract.on('GameCreated', async function (gameId, player1) {
+                    await updateStats();
+                    if (player1.toLowerCase() === userAddress.toLowerCase()) {
+                        currentGameId = Number(gameId);
+                        showView('game');
+                        await refreshGame();
+                        notify('Game created - waiting for opponent', 'info');
+                    }
+                });
+
+                contract.on('GameStarted', async function (gameId) {
+                    if (Number(gameId) === currentGameId) {
+                        await refreshGame();
+                        notify('Opponent joined!', 'success');
+                    }
+                });
+
+                contract.on('DangerousTilesSet', async function (gameId) {
+                    if (Number(gameId) === currentGameId) {
+                        await refreshGame();
+                        notify('Game started!', 'success');
+                    }
+                });
+
+                contract.on('MoveMade', async function (gameId, player, tile, hitDanger) {
+                    if (Number(gameId) === currentGameId) {
+                        revealTile(Number(tile), hitDanger);
+                        if (!hitDanger) { await refreshGame(); }
+                    }
+                });
+
+                contract.on('GameFinished', async function (gameId, winner, payout) {
+                    if (Number(gameId) === currentGameId) {
+                        var won = winner.toLowerCase() === userAddress.toLowerCase();
+                        showResult(won, ethers.formatEther(payout));
+                        await updateBalance();
+                    }
+                });
+            }
+
+            async function joinGame(tier) {
+                if (!contract) { notify('Connect wallet first', 'error'); return; }
+
+                try {
+                    var payment = await contract.getRequiredPayment(tier);
+                    notify('Joining ' + BET_AMOUNTS[tier] + ' MON game...', 'info');
+
+                    var tx = await contract.joinGame(tier, { value: payment });
+                    notify('Transaction sent...', 'info');
+                    await tx.wait();
+                    await updateBalance();
+                } catch (err) {
+                    console.error(err);
+                    notify(err.reason || err.message || 'Transaction failed', 'error');
+                }
+            }
+
+            async function makeMove(tile) {
+                if (!contract || !currentGameId) return;
+
+                try {
+                    var tx = await contract.makeMove(currentGameId, tile);
+                    await tx.wait();
+                } catch (err) {
+                    console.error(err);
+                    notify(err.reason || 'Move failed', 'error');
+                }
+            }
+
+            function exitGame() {
+                currentGameId = null;
+                showView('lobby');
+                resetBoard();
+            }
+
+            function showView(view) {
+                var landing = $('landingView');
+                var lobby = $('lobbyView');
+                var game = $('gameView');
+                var howItWorks = $('howItWorksView');
+
+                if (landing) landing.classList.add('hidden');
+                if (lobby) lobby.classList.add('hidden');
+                if (game) game.classList.add('hidden');
+                if (howItWorks) howItWorks.classList.add('hidden');
+
+                if (view === 'landing' && landing) landing.classList.remove('hidden');
+                if (view === 'lobby' && lobby) { lobby.classList.remove('hidden'); updateStats(); }
+                if (view === 'game' && game) game.classList.remove('hidden');
+                if (view === 'howItWorks' && howItWorks) howItWorks.classList.remove('hidden');
+            }
+
+            async function checkActiveGame() {
+                if (!contract) return;
+                try {
+                    var gameId = await contract.playerActiveGame(userAddress);
+                    if (Number(gameId) > 0) {
+                        var game = await contract.getGame(gameId);
+                        if (Number(game.state) !== 3) {
+                            currentGameId = Number(gameId);
+                            showView('game');
+                            await refreshGame();
+                            return;
+                        }
+                    }
+                    showView('lobby');
+                } catch (err) {
+                    console.error(err);
+                    showView('lobby');
+                }
+            }
+
+            async function updateStats() {
+                if (!contract) return;
+                try {
+                    var total = await contract.gameCounter();
+                    var el = $('statGames');
+                    if (el) el.textContent = Number(total);
+
+                    var waiting = 0;
+                    for (var tier = 0; tier <= 2; tier++) {
+                        var gameId = await contract.getWaitingGame(tier);
+                        var statusEl = $('stake' + tier + 'Status');
+                        if (statusEl) {
+                            var textEl = statusEl.querySelector('.status-text');
+                            if (Number(gameId) > 0) {
+                                statusEl.classList.add('waiting');
+                                if (textEl) textEl.textContent = 'Player waiting';
+                                waiting++;
+                            } else {
+                                statusEl.classList.remove('waiting');
+                                if (textEl) textEl.textContent = 'Empty lobby';
+                            }
+                        }
+                    }
+
+                    var waitingEl = $('statWaiting');
+                    if (waitingEl) waitingEl.textContent = waiting;
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            async function refreshGame() {
+                if (!currentGameId || !contract) return;
+
+                try {
+                    var game = await contract.getGame(currentGameId);
+
+                    var gameIdEl = $('gameId');
+                    if (gameIdEl) gameIdEl.textContent = '#' + currentGameId;
+
+                    var potMon = Number(ethers.formatEther(game.betAmount)) * 2;
+                    var potEl = $('gamePot');
+                    if (potEl) potEl.textContent = potMon + ' MON';
+
+                    var isP1 = game.player1.toLowerCase() === userAddress.toLowerCase();
+
+                    var p1Addr = $('p1Addr');
+                    if (p1Addr) p1Addr.textContent = truncate(game.player1);
+
+                    var p2Addr = $('p2Addr');
+                    if (p2Addr) p2Addr.textContent = game.player2 !== ethers.ZeroAddress ? truncate(game.player2) : 'Waiting...';
+
+                    var p1Card = $('p1Card');
+                    var p2Card = $('p2Card');
+
+                    if (p1Card) p1Card.classList.toggle('is-you', isP1);
+                    if (p2Card) p2Card.classList.toggle('is-you', !isP1 && game.player2 !== ethers.ZeroAddress);
+
+                    var isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
+                    var isP1Turn = game.currentTurn.toLowerCase() === game.player1.toLowerCase();
+                    var gameState = Number(game.state);
+
+                    if (p1Card) p1Card.classList.toggle('active', gameState === 2 && isP1Turn);
+                    if (p2Card) p2Card.classList.toggle('active', gameState === 2 && !isP1Turn);
+
+                    var stateTexts = ['Waiting for opponent', 'Generating tiles...', isMyTurn ? 'Your turn' : "Opponent's turn", 'Game over'];
+
+                    var stateEl = $('gameState');
+                    if (stateEl) {
+                        stateEl.textContent = stateTexts[gameState];
+                        stateEl.classList.toggle('your-turn', gameState === 2 && isMyTurn);
+                    }
+
+                    var showOverlay = gameState <= 1;
+                    var overlay = $('boardOverlay');
+                    if (overlay) overlay.classList.toggle('visible', showOverlay);
+
+                    var overlayText = $('overlayText');
+                    if (overlayText) overlayText.textContent = stateTexts[gameState];
+
+                    updateBoard(game);
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            function updateBoard(game) {
+                var isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
+                var isActive = Number(game.state) === 2;
+                var tiles = $$('.tile');
+
+                for (var i = 0; i < tiles.length; i++) {
+                    var revealed = (BigInt(game.revealedTiles) & (1n << BigInt(i))) !== 0n;
+                    tiles[i].classList.toggle('revealed', revealed);
+                    tiles[i].classList.toggle('disabled', !isActive || !isMyTurn || revealed);
+                }
+            }
+
+            function revealTile(index, isDanger) {
+                var tiles = $$('.tile');
+                if (tiles[index]) {
+                    tiles[index].classList.add('revealed');
+                    tiles[index].classList.add(isDanger ? 'danger' : 'safe');
+                }
+            }
+
+            function createBoard() {
+                var board = $('gameBoard');
+                if (!board) return;
+
+                board.innerHTML = '';
+                for (var i = 0; i < 25; i++) {
+                    var tile = document.createElement('button');
+                    tile.className = 'tile disabled';
+                    tile.setAttribute('data-index', i);
+                    (function (index) {
+                        tile.onclick = function () {
+                            if (!this.classList.contains('disabled') && !this.classList.contains('revealed')) {
+                                makeMove(index);
+                            }
+                        };
+                    })(i);
+                    board.appendChild(tile);
+                }
+            }
+
+            function resetBoard() {
+                var tiles = $$('.tile');
+                for (var i = 0; i < tiles.length; i++) {
+                    tiles[i].className = 'tile disabled';
+                }
+            }
+
+            function showResult(won, payout) {
+                var icon = $('resultIcon');
+                if (icon) icon.textContent = won ? '🏆' : '💀';
+
+                var title = $('resultTitle');
+                if (title) {
+                    title.textContent = won ? 'Victory!' : 'Defeated';
+                    title.className = 'result-title ' + (won ? 'win' : 'lose');
+                }
+
+                var info = $('resultInfo');
+                if (info) info.textContent = won ? 'You won ' + payout + ' MON' : 'Better luck next time';
+
+                var overlay = $('resultOverlay');
+                if (overlay) overlay.classList.remove('hidden');
+            }
+
+            function closeResult() {
+                var overlay = $('resultOverlay');
+                if (overlay) overlay.classList.add('hidden');
+                currentGameId = null;
+                showView('lobby');
+                resetBoard();
+                updateStats();
+            }
+
+            function truncate(addr) {
+                if (!addr) return '-';
+                return addr.slice(0, 6) + '...' + addr.slice(-4);
+            }
+
+            function notify(msg, type) {
+                type = type || 'info';
+                console.log('[' + type + ']', msg);
+
+                var container = $('notifications');
+                if (container) {
+                    var el = document.createElement('div');
+                    el.className = 'notification ' + type;
+                    el.innerHTML = '<span class="notification-text">' + msg + '</span>';
+                    container.appendChild(el);
+                    setTimeout(function () { el.remove(); }, 4000);
+                }
+            }
+        })();
+    </script>
 </body>
 
 </html>
