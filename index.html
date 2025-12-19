@@ -12,7 +12,6 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="index.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
 </head>
 
 <body>
@@ -52,7 +51,7 @@
                 </div>
                 <div class="wallet-wrapper">
                     <button id="connectBtn" class="connect-btn">
-                        <span class="connect-text">Connect</span>
+                        <span class="connect-text">Login</span>
                         <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
@@ -363,9 +362,34 @@
 
         <!-- Notifications -->
         <div id="notifications" class="notifications"></div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="login-overlay hidden">
+            <div class="login-card">
+                <button id="closeLoginBtn" class="login-close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+                <h2 class="login-title">Login to Play</h2>
+                <p class="login-subtitle">Enter your email to get started</p>
+
+                <div id="loginStep1" class="login-step">
+                    <input type="email" id="emailInput" class="login-input" placeholder="your@email.com">
+                    <button id="sendCodeBtn" class="login-btn">Send Code</button>
+                </div>
+
+                <div id="loginStep2" class="login-step hidden">
+                    <p class="login-info">We sent a code to your email</p>
+                    <input type="text" id="otpInput" class="login-input" placeholder="Enter code" maxlength="6">
+                    <button id="verifyCodeBtn" class="login-btn">Verify</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 
 </html>
