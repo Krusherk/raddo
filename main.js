@@ -1,11 +1,11 @@
 // ============ Config ============
-var CONTRACT_ADDRESS = '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4';
-var CHAIN_ID = 10143;
-var CHAIN_NAME = 'Monad Testnet';
-var RPC_URL = 'https://testnet-rpc.monad.xyz';
-var EXPLORER = 'https://testnet.monadexplorer.com';
+const CONTRACT_ADDRESS = '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4';
+const CHAIN_ID = 10143;
+const CHAIN_NAME = 'Monad Testnet';
+const RPC_URL = 'https://testnet-rpc.monad.xyz';
+const EXPLORER = 'https://testnet.monadexplorer.com';
 
-var CONTRACT_ABI = [
+const CONTRACT_ABI = [
     "event GameCreated(uint256 indexed gameId, address indexed player1, uint8 tier, uint256 betAmount)",
     "event GameStarted(uint256 indexed gameId, address indexed player2)",
     "event DangerousTilesSet(uint256 indexed gameId)",
@@ -20,138 +20,77 @@ var CONTRACT_ABI = [
     "function playerActiveGame(address player) external view returns (uint256)"
 ];
 
-var GameState = { WaitingForPlayer: 0, WaitingForVRF: 1, InProgress: 2, Finished: 3 };
-var BET_AMOUNTS = { 0: 1, 1: 5, 2: 10 };
+const GameState = { WaitingForPlayer: 0, WaitingForVRF: 1, InProgress: 2, Finished: 3 };
+const BET_AMOUNTS = { 0: 1, 1: 5, 2: 10 };
 
 // ============ State ============
-var provider = null;
-var signer = null;
-var contract = null;
-var userAddress = null;
-var currentGameId = null;
-var dropdownOpen = false;
+let provider = null;
+let signer = null;
+let contract = null;
+let userAddress = null;
+let currentGameId = null;
+let dropdownOpen = false;
 
-// ============ Initialize when DOM is ready ============
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM ready, initializing...');
-    init();
+// ============ DOM Elements ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ Init ============
+document.addEventListener('DOMContentLoaded', () => {
+    createBoard();
+    bindEvents();
+    checkExistingConnection();
 });
 
-function init() {
-    // Get elements
-    const connectBtn = document.getElementById('connectBtn');
-    const playNowBtn = document.getElementById('playNowBtn');
-    const copyAddressBtn = document.getElementById('copyAddressBtn');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const howItWorksLink = document.getElementById('howItWorksLink');
-    const backFromHowItWorks = document.getElementById('backFromHowItWorks');
-    const backToLanding = document.getElementById('backToLanding');
-    const exitGameBtn = document.getElementById('exitGameBtn');
-    const resultBtn = document.getElementById('resultBtn');
+function bindEvents() {
+    $('#connectBtn').addEventListener('click', handleWalletClick);
+    $('#copyAddressBtn').addEventListener('click', copyAddress);
+    $('#disconnectBtn').addEventListener('click', disconnectWallet);
+    $('#playNowBtn').addEventListener('click', () => {
+        if (!userAddress) connectWallet();
+        else showView('lobby');
+    });
+    $('#howItWorksLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('howItWorks');
+    });
+    $('#backFromHowItWorks').addEventListener('click', () => showView('landing'));
+    $('#backToLanding').addEventListener('click', () => showView('landing'));
+    $('#exitGameBtn').addEventListener('click', exitGame);
+    $('#resultBtn').addEventListener('click', closeResult);
 
-    console.log('Connect button found:', connectBtn);
-
-    // Bind connect button
-    if (connectBtn) {
-        connectBtn.onclick = function () {
-            console.log('Connect clicked!');
-            handleWalletClick();
-        };
-    }
-
-    // Bind play now button
-    if (playNowBtn) {
-        playNowBtn.onclick = function () {
-            if (!userAddress) {
-                connectWallet();
-            } else {
-                showView('lobby');
-            }
-        };
-    }
-
-    // Bind other buttons
-    if (copyAddressBtn) {
-        copyAddressBtn.onclick = copyAddress;
-    }
-
-    if (disconnectBtn) {
-        disconnectBtn.onclick = disconnectWallet;
-    }
-
-    if (howItWorksLink) {
-        howItWorksLink.onclick = function (e) {
-            e.preventDefault();
-            showView('howItWorks');
-        };
-    }
-
-    if (backFromHowItWorks) {
-        backFromHowItWorks.onclick = function () {
-            showView('landing');
-        };
-    }
-
-    if (backToLanding) {
-        backToLanding.onclick = function () {
-            showView('landing');
-        };
-    }
-
-    if (exitGameBtn) {
-        exitGameBtn.onclick = exitGame;
-    }
-
-    if (resultBtn) {
-        resultBtn.onclick = closeResult;
-    }
-
-    // Bind stake buttons
-    document.querySelectorAll('.stake-btn').forEach(function (btn) {
-        btn.onclick = function () {
-            var tier = parseInt(btn.getAttribute('data-tier'));
-            joinGame(tier);
-        };
+    $$('.stake-btn').forEach(btn => {
+        btn.addEventListener('click', () => joinGame(parseInt(btn.dataset.tier)));
     });
 
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.wallet-wrapper') && dropdownOpen) {
-            closeDropdown();
-        }
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.wallet-wrapper') && dropdownOpen) closeDropdown();
     });
-
-    // Create game board
-    createBoard();
-
-    // Check existing connection
-    checkExistingConnection();
 }
 
-// ============ Wallet Functions ============
-function handleWalletClick() {
-    console.log('handleWalletClick called, userAddress:', userAddress);
-    if (userAddress) {
-        toggleDropdown();
-    } else {
-        connectWallet();
+async function checkExistingConnection() {
+    if (window.ethereum) {
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) await connectWallet();
+        } catch (e) { }
     }
+}
+
+// ============ Wallet ============
+function handleWalletClick() {
+    if (userAddress) toggleDropdown();
+    else connectWallet();
 }
 
 function toggleDropdown() {
     dropdownOpen = !dropdownOpen;
-    var dropdown = document.getElementById('walletDropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('hidden', !dropdownOpen);
-    }
+    $('#walletDropdown').classList.toggle('hidden', !dropdownOpen);
 }
 
 function closeDropdown() {
     dropdownOpen = false;
-    var dropdown = document.getElementById('walletDropdown');
-    if (dropdown) {
-        dropdown.classList.add('hidden');
-    }
+    $('#walletDropdown').classList.add('hidden');
 }
 
 function copyAddress() {
@@ -169,143 +108,79 @@ function disconnectWallet() {
     contract = null;
     currentGameId = null;
 
-    var connectBtn = document.getElementById('connectBtn');
-    if (connectBtn) {
-        connectBtn.innerHTML = '<span class="connect-text">Connect</span><svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
-        connectBtn.classList.remove('connected');
-    }
-
-    var balanceDisplay = document.getElementById('balanceDisplay');
-    if (balanceDisplay) {
-        balanceDisplay.classList.add('hidden');
-    }
-
+    $('#connectBtn').innerHTML = '<span class="connect-text">Connect</span><svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
+    $('#connectBtn').classList.remove('connected');
+    $('#balanceDisplay').classList.add('hidden');
     closeDropdown();
     showView('landing');
     notify('Wallet disconnected', 'info');
 }
 
 async function connectWallet() {
-    console.log('connectWallet called');
-
-    if (typeof window.ethereum === 'undefined') {
+    if (!window.ethereum) {
         notify('Please install MetaMask!', 'error');
-        alert('Please install MetaMask to use this app!');
         return;
     }
 
     try {
-        notify('Connecting wallet...', 'info');
-        console.log('Requesting accounts...');
-
-        var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        console.log('Accounts received:', accounts);
-
+        notify('Connecting...', 'info');
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
 
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
 
-        var network = await provider.getNetwork();
-        console.log('Network:', network.chainId);
-
-        if (Number(network.chainId) !== CHAIN_ID) {
-            await switchNetwork();
-        }
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== CHAIN_ID) await switchNetwork();
 
         contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        console.log('Contract ready');
 
-        // Update button
-        var connectBtn = document.getElementById('connectBtn');
-        if (connectBtn) {
-            connectBtn.innerHTML = '<span class="connect-text">' + truncate(userAddress) + '</span>';
-            connectBtn.classList.add('connected');
-        }
+        $('#connectBtn').innerHTML = `<span class="connect-text">${truncate(userAddress)}</span>`;
+        $('#connectBtn').classList.add('connected');
 
         await updateBalance();
         setupEvents();
         await checkActiveGame();
         await updateStats();
 
-        setInterval(function () {
-            if (currentGameId) {
-                refreshGame();
-            } else {
-                updateStats();
-            }
+        setInterval(() => {
+            if (currentGameId) refreshGame();
+            else updateStats();
             updateBalance();
         }, 5000);
 
-        notify('Wallet connected!', 'success');
-
+        notify('Connected!', 'success');
     } catch (err) {
-        console.error('Connection error:', err);
         notify(err.message || 'Connection failed', 'error');
-    }
-}
-
-async function checkExistingConnection() {
-    if (typeof window.ethereum !== 'undefined') {
-        try {
-            var accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            if (accounts.length > 0) {
-                await connectWallet();
-            }
-        } catch (e) {
-            console.log('No existing connection');
-        }
     }
 }
 
 async function updateBalance() {
     if (!provider || !userAddress) return;
-
     try {
-        var balance = await provider.getBalance(userAddress);
-        var formatted = parseFloat(ethers.formatEther(balance)).toFixed(2);
-        var balanceValue = document.getElementById('balanceValue');
-        if (balanceValue) {
-            balanceValue.textContent = formatted;
-        }
-        var balanceDisplay = document.getElementById('balanceDisplay');
-        if (balanceDisplay) {
-            balanceDisplay.classList.remove('hidden');
-        }
-    } catch (err) {
-        console.error('Balance error:', err);
-    }
+        const balance = await provider.getBalance(userAddress);
+        $('#balanceValue').textContent = parseFloat(ethers.formatEther(balance)).toFixed(2);
+        $('#balanceDisplay').classList.remove('hidden');
+    } catch (err) { }
 }
 
 async function switchNetwork() {
-    var chainIdHex = '0x' + CHAIN_ID.toString(16);
-
+    const chainIdHex = '0x' + CHAIN_ID.toString(16);
     try {
-        await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: chainIdHex }]
-        });
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
     } catch (err) {
         if (err.code === 4902) {
             await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
-                params: [{
-                    chainId: chainIdHex,
-                    chainName: CHAIN_NAME,
-                    nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-                    rpcUrls: [RPC_URL],
-                    blockExplorerUrls: [EXPLORER]
-                }]
+                params: [{ chainId: chainIdHex, chainName: CHAIN_NAME, nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 }, rpcUrls: [RPC_URL], blockExplorerUrls: [EXPLORER] }]
             });
-        } else {
-            throw err;
         }
     }
 }
 
 // ============ Contract Events ============
 function setupEvents() {
-    contract.on('GameCreated', async function (gameId, player1) {
+    contract.on('GameCreated', async (gameId, player1) => {
         await updateStats();
         if (player1.toLowerCase() === userAddress.toLowerCase()) {
             currentGameId = Number(gameId);
@@ -315,31 +190,30 @@ function setupEvents() {
         }
     });
 
-    contract.on('GameStarted', async function (gameId) {
+    contract.on('GameStarted', async (gameId) => {
         if (Number(gameId) === currentGameId) {
             await refreshGame();
             notify('Opponent joined!', 'success');
         }
     });
 
-    contract.on('DangerousTilesSet', async function (gameId) {
+    contract.on('DangerousTilesSet', async (gameId) => {
         if (Number(gameId) === currentGameId) {
             await refreshGame();
             notify('Game started!', 'success');
         }
     });
 
-    contract.on('MoveMade', async function (gameId, player, tile, hitDanger) {
+    contract.on('MoveMade', async (gameId, player, tile, hitDanger) => {
         if (Number(gameId) === currentGameId) {
             revealTile(Number(tile), hitDanger);
             if (!hitDanger) await refreshGame();
         }
     });
 
-    contract.on('GameFinished', async function (gameId, winner, payout) {
+    contract.on('GameFinished', async (gameId, winner, payout) => {
         if (Number(gameId) === currentGameId) {
-            var won = winner.toLowerCase() === userAddress.toLowerCase();
-            showResult(won, ethers.formatEther(payout));
+            showResult(winner.toLowerCase() === userAddress.toLowerCase(), ethers.formatEther(payout));
             await updateBalance();
         }
     });
@@ -347,33 +221,24 @@ function setupEvents() {
 
 // ============ Game Actions ============
 async function joinGame(tier) {
-    if (!contract) {
-        notify('Connect wallet first', 'error');
-        return;
-    }
-
+    if (!contract) { notify('Connect wallet first', 'error'); return; }
     try {
-        var payment = await contract.getRequiredPayment(tier);
-        notify('Joining ' + BET_AMOUNTS[tier] + ' MON game...', 'info');
-
-        var tx = await contract.joinGame(tier, { value: payment });
-        notify('Transaction sent...', 'info');
+        const payment = await contract.getRequiredPayment(tier);
+        notify(`Joining ${BET_AMOUNTS[tier]} MON game...`, 'info');
+        const tx = await contract.joinGame(tier, { value: payment });
         await tx.wait();
         await updateBalance();
     } catch (err) {
-        console.error(err);
-        notify(err.reason || err.message || 'Transaction failed', 'error');
+        notify(err.reason || err.message || 'Failed', 'error');
     }
 }
 
 async function makeMove(tile) {
     if (!contract || !currentGameId) return;
-
     try {
-        var tx = await contract.makeMove(currentGameId, tile);
+        const tx = await contract.makeMove(currentGameId, tile);
         await tx.wait();
     } catch (err) {
-        console.error(err);
         notify(err.reason || 'Move failed', 'error');
     }
 }
@@ -384,32 +249,24 @@ function exitGame() {
     resetBoard();
 }
 
-// ============ UI Functions ============
+// ============ UI ============
 function showView(view) {
-    var landingView = document.getElementById('landingView');
-    var lobbyView = document.getElementById('lobbyView');
-    var gameView = document.getElementById('gameView');
-    var howItWorksView = document.getElementById('howItWorksView');
+    $('#landingView').classList.add('hidden');
+    $('#lobbyView').classList.add('hidden');
+    $('#gameView').classList.add('hidden');
+    $('#howItWorksView').classList.add('hidden');
 
-    if (landingView) landingView.classList.add('hidden');
-    if (lobbyView) lobbyView.classList.add('hidden');
-    if (gameView) gameView.classList.add('hidden');
-    if (howItWorksView) howItWorksView.classList.add('hidden');
-
-    if (view === 'landing' && landingView) landingView.classList.remove('hidden');
-    if (view === 'lobby' && lobbyView) {
-        lobbyView.classList.remove('hidden');
-        updateStats();
-    }
-    if (view === 'game' && gameView) gameView.classList.remove('hidden');
-    if (view === 'howItWorks' && howItWorksView) howItWorksView.classList.remove('hidden');
+    if (view === 'landing') $('#landingView').classList.remove('hidden');
+    if (view === 'lobby') { $('#lobbyView').classList.remove('hidden'); updateStats(); }
+    if (view === 'game') $('#gameView').classList.remove('hidden');
+    if (view === 'howItWorks') $('#howItWorksView').classList.remove('hidden');
 }
 
 async function checkActiveGame() {
     try {
-        var gameId = await contract.playerActiveGame(userAddress);
+        const gameId = await contract.playerActiveGame(userAddress);
         if (Number(gameId) > 0) {
-            var game = await contract.getGame(gameId);
+            const game = await contract.getGame(gameId);
             if (Number(game.state) !== GameState.Finished) {
                 currentGameId = Number(gameId);
                 showView('game');
@@ -418,173 +275,106 @@ async function checkActiveGame() {
             }
         }
         showView('lobby');
-    } catch (err) {
-        console.error(err);
-        showView('lobby');
-    }
+    } catch (err) { showView('lobby'); }
 }
 
 async function updateStats() {
     if (!contract) return;
-
     try {
-        var total = await contract.gameCounter();
-        var statGames = document.getElementById('statGames');
-        if (statGames) statGames.textContent = Number(total);
+        const total = await contract.gameCounter();
+        $('#statGames').textContent = Number(total);
 
-        var waiting = 0;
-        for (var tier = 0; tier <= 2; tier++) {
-            var gameId = await contract.getWaitingGame(tier);
-            var hasWaiting = Number(gameId) > 0;
-
-            var statusEl = document.getElementById('stake' + tier + 'Status');
-            if (statusEl) {
-                if (hasWaiting) {
-                    statusEl.classList.add('waiting');
-                    var statusText = statusEl.querySelector('.status-text');
-                    if (statusText) statusText.textContent = 'Player waiting';
-                    waiting++;
-                } else {
-                    statusEl.classList.remove('waiting');
-                    var statusText = statusEl.querySelector('.status-text');
-                    if (statusText) statusText.textContent = 'Empty lobby';
-                }
+        let waiting = 0;
+        for (let tier = 0; tier <= 2; tier++) {
+            const gameId = await contract.getWaitingGame(tier);
+            const statusEl = $(`#stake${tier}Status`);
+            if (Number(gameId) > 0) {
+                statusEl.classList.add('waiting');
+                statusEl.querySelector('.status-text').textContent = 'Player waiting';
+                waiting++;
+            } else {
+                statusEl.classList.remove('waiting');
+                statusEl.querySelector('.status-text').textContent = 'Empty lobby';
             }
         }
-
-        var statWaiting = document.getElementById('statWaiting');
-        if (statWaiting) statWaiting.textContent = waiting;
-    } catch (err) {
-        console.error(err);
-    }
+        $('#statWaiting').textContent = waiting;
+    } catch (err) { }
 }
 
 async function refreshGame() {
     if (!currentGameId) return;
-
     try {
-        var game = await contract.getGame(currentGameId);
+        const game = await contract.getGame(currentGameId);
 
-        var gameIdEl = document.getElementById('gameId');
-        if (gameIdEl) gameIdEl.textContent = '#' + currentGameId;
+        $('#gameId').textContent = `#${currentGameId}`;
+        $('#gamePot').textContent = `${Number(ethers.formatEther(game.betAmount)) * 2} MON`;
 
-        var potMon = Number(ethers.formatEther(game.betAmount)) * 2;
-        var gamePot = document.getElementById('gamePot');
-        if (gamePot) gamePot.textContent = potMon + ' MON';
+        const isP1 = game.player1.toLowerCase() === userAddress.toLowerCase();
+        $('#p1Addr').textContent = truncate(game.player1);
+        $('#p2Addr').textContent = game.player2 !== ethers.ZeroAddress ? truncate(game.player2) : 'Waiting...';
 
-        var isP1 = game.player1.toLowerCase() === userAddress.toLowerCase();
+        $('#p1Card').classList.toggle('is-you', isP1);
+        $('#p2Card').classList.toggle('is-you', !isP1 && game.player2 !== ethers.ZeroAddress);
 
-        var p1Addr = document.getElementById('p1Addr');
-        if (p1Addr) p1Addr.textContent = truncate(game.player1);
+        const isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
+        const isP1Turn = game.currentTurn.toLowerCase() === game.player1.toLowerCase();
 
-        var p2Addr = document.getElementById('p2Addr');
-        if (p2Addr) p2Addr.textContent = game.player2 !== ethers.ZeroAddress ? truncate(game.player2) : 'Waiting...';
+        $('#p1Card').classList.toggle('active', Number(game.state) === GameState.InProgress && isP1Turn);
+        $('#p2Card').classList.toggle('active', Number(game.state) === GameState.InProgress && !isP1Turn);
 
-        var p1Card = document.getElementById('p1Card');
-        var p2Card = document.getElementById('p2Card');
+        const stateText = { 0: 'Waiting for opponent', 1: 'Generating tiles...', 2: isMyTurn ? 'Your turn' : "Opponent's turn", 3: 'Game over' };
+        $('#gameState').textContent = stateText[Number(game.state)];
+        $('#gameState').classList.toggle('your-turn', Number(game.state) === GameState.InProgress && isMyTurn);
 
-        if (p1Card) p1Card.classList.toggle('is-you', isP1);
-        if (p2Card) p2Card.classList.toggle('is-you', !isP1 && game.player2 !== ethers.ZeroAddress);
-
-        var isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
-        var isP1Turn = game.currentTurn.toLowerCase() === game.player1.toLowerCase();
-
-        if (p1Card) p1Card.classList.toggle('active', Number(game.state) === GameState.InProgress && isP1Turn);
-        if (p2Card) p2Card.classList.toggle('active', Number(game.state) === GameState.InProgress && !isP1Turn);
-
-        var stateText = {
-            0: 'Waiting for opponent',
-            1: 'Generating tiles...',
-            2: isMyTurn ? 'Your turn' : "Opponent's turn",
-            3: 'Game over'
-        };
-
-        var gameState = document.getElementById('gameState');
-        if (gameState) {
-            gameState.textContent = stateText[Number(game.state)];
-            gameState.classList.toggle('your-turn', Number(game.state) === GameState.InProgress && isMyTurn);
-        }
-
-        var showOverlay = Number(game.state) === GameState.WaitingForPlayer || Number(game.state) === GameState.WaitingForVRF;
-        var boardOverlay = document.getElementById('boardOverlay');
-        if (boardOverlay) boardOverlay.classList.toggle('visible', showOverlay);
-
-        var overlayText = document.getElementById('overlayText');
-        if (overlayText) overlayText.textContent = stateText[Number(game.state)];
+        const showOverlay = Number(game.state) <= 1;
+        $('#boardOverlay').classList.toggle('visible', showOverlay);
+        $('#overlayText').textContent = stateText[Number(game.state)];
 
         updateBoard(game);
-
-    } catch (err) {
-        console.error(err);
-    }
+    } catch (err) { }
 }
 
 function updateBoard(game) {
-    var isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
-    var isActive = Number(game.state) === GameState.InProgress;
+    const isMyTurn = game.currentTurn.toLowerCase() === userAddress.toLowerCase();
+    const isActive = Number(game.state) === GameState.InProgress;
 
-    document.querySelectorAll('.tile').forEach(function (tile, i) {
-        var revealed = (BigInt(game.revealedTiles) & (1n << BigInt(i))) !== 0n;
+    $$('.tile').forEach((tile, i) => {
+        const revealed = (BigInt(game.revealedTiles) & (1n << BigInt(i))) !== 0n;
         tile.classList.toggle('revealed', revealed);
         tile.classList.toggle('disabled', !isActive || !isMyTurn || revealed);
     });
 }
 
 function revealTile(index, isDanger) {
-    var tiles = document.querySelectorAll('.tile');
-    if (tiles[index]) {
-        tiles[index].classList.add('revealed');
-        tiles[index].classList.add(isDanger ? 'danger' : 'safe');
-    }
+    const tile = $$('.tile')[index];
+    tile.classList.add('revealed', isDanger ? 'danger' : 'safe');
 }
 
 function createBoard() {
-    var gameBoard = document.getElementById('gameBoard');
-    if (!gameBoard) return;
-
-    gameBoard.innerHTML = '';
-    for (var i = 0; i < 25; i++) {
-        var tile = document.createElement('button');
+    const board = $('#gameBoard');
+    board.innerHTML = '';
+    for (let i = 0; i < 25; i++) {
+        const tile = document.createElement('button');
         tile.className = 'tile disabled';
-        tile.setAttribute('data-index', i);
-        tile.onclick = (function (index) {
-            return function () {
-                var t = document.querySelectorAll('.tile')[index];
-                if (!t.classList.contains('disabled') && !t.classList.contains('revealed')) {
-                    makeMove(index);
-                }
-            };
-        })(i);
-        gameBoard.appendChild(tile);
+        tile.onclick = () => { if (!tile.classList.contains('disabled')) makeMove(i); };
+        board.appendChild(tile);
     }
 }
 
 function resetBoard() {
-    document.querySelectorAll('.tile').forEach(function (tile) {
-        tile.className = 'tile disabled';
-    });
+    $$('.tile').forEach(t => t.className = 'tile disabled');
 }
 
 function showResult(won, payout) {
-    var resultIcon = document.getElementById('resultIcon');
-    if (resultIcon) resultIcon.textContent = won ? '🏆' : '💀';
-
-    var resultTitle = document.getElementById('resultTitle');
-    if (resultTitle) {
-        resultTitle.textContent = won ? 'Victory!' : 'Defeated';
-        resultTitle.className = 'result-title ' + (won ? 'win' : 'lose');
-    }
-
-    var resultInfo = document.getElementById('resultInfo');
-    if (resultInfo) resultInfo.textContent = won ? 'You won ' + payout + ' MON' : 'Better luck next time';
-
-    var resultOverlay = document.getElementById('resultOverlay');
-    if (resultOverlay) resultOverlay.classList.remove('hidden');
+    $('#resultIcon').textContent = won ? '🏆' : '💀';
+    $('#resultTitle').textContent = won ? 'Victory!' : 'Defeated';
+    $('#resultTitle').className = `result-title ${won ? 'win' : 'lose'}`;
+    $('#resultInfo').textContent = won ? `You won ${payout} MON` : 'Better luck next time';
+    $('#resultOverlay').classList.remove('hidden');
 }
 
 function closeResult() {
-    var resultOverlay = document.getElementById('resultOverlay');
-    if (resultOverlay) resultOverlay.classList.add('hidden');
+    $('#resultOverlay').classList.add('hidden');
     currentGameId = null;
     showView('lobby');
     resetBoard();
@@ -593,22 +383,13 @@ function closeResult() {
 
 // ============ Helpers ============
 function truncate(addr) {
-    if (!addr || addr === ethers.ZeroAddress) return '-';
-    return addr.slice(0, 6) + '...' + addr.slice(-4);
+    return addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : '-';
 }
 
-function notify(message, type) {
-    type = type || 'info';
-    console.log('[' + type + '] ' + message);
-
-    var notifications = document.getElementById('notifications');
-    if (notifications) {
-        var el = document.createElement('div');
-        el.className = 'notification ' + type;
-        el.innerHTML = '<span class="notification-text">' + message + '</span>';
-        notifications.appendChild(el);
-        setTimeout(function () {
-            el.remove();
-        }, 4000);
-    }
+function notify(msg, type = 'info') {
+    const el = document.createElement('div');
+    el.className = `notification ${type}`;
+    el.innerHTML = `<span class="notification-text">${msg}</span>`;
+    $('#notifications').appendChild(el);
+    setTimeout(() => el.remove(), 4000);
 }
