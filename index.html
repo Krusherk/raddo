@@ -1,396 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TAKKOFUN - A thrilling blockchain tile game on Monad">
-    <title>TAKKOFUN | Monad</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
+    <title>Test Connect</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            background: #00d4aa;
+            border: none;
+            border-radius: 8px;
+        }
+
+        button:hover {
+            background: #00a88a;
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="noise"></div>
-    <div class="glow glow-1"></div>
-    <div class="glow glow-2"></div>
+    <h1>TAKKOFUN - Test Page</h1>
+    <p>This is a minimal test to check if wallet connection works.</p>
 
-    <div id="app">
-        <!-- Navigation -->
-        <nav class="nav">
-            <div class="nav-brand">
-                <div class="brand-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
-                        <line x1="12" y1="22" x2="12" y2="15.5" />
-                        <polyline points="22 8.5 12 15.5 2 8.5" />
-                    </svg>
-                </div>
-                <span class="brand-text">TAKKO<span class="brand-accent">FUN</span></span>
-            </div>
+    <button id="testConnectBtn">Connect Wallet</button>
 
-            <div class="nav-center">
-                <a href="#how-it-works" class="nav-link" id="howItWorksLink">How it Works</a>
-                <a href="https://x.com/takkofun" target="_blank" class="nav-link nav-twitter">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                        <path
-                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                    <span>@takkofun</span>
-                </a>
-            </div>
+    <div id="status">Status: Not connected</div>
 
-            <div class="nav-right">
-                <div class="balance-display hidden" id="balanceDisplay">
-                    <span class="balance-value" id="balanceValue">0.00</span>
-                    <span class="balance-currency">MON</span>
-                </div>
-                <div class="wallet-wrapper">
-                    <button id="connectBtn" class="connect-btn">
-                        <span class="connect-text">Connect</span>
-                        <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                            <polyline points="10 17 15 12 10 7" />
-                            <line x1="15" y1="12" x2="3" y2="12" />
-                        </svg>
-                    </button>
-                    <div class="wallet-dropdown hidden" id="walletDropdown">
-                        <button class="dropdown-item" id="copyAddressBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                            </svg>
-                            Copy Address
-                        </button>
-                        <button class="dropdown-item" id="disconnectBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                            Disconnect
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
+    <script>
+        console.log('Script loaded');
 
-        <!-- Main Content -->
-        <main class="main">
-            <!-- Landing View -->
-            <section id="landingView" class="view landing">
-                <div class="landing-content">
-                    <div class="landing-badge">LIVE ON MONAD</div>
-                    <h1 class="landing-title">
-                        Step carefully.<br>
-                        <span class="title-highlight">Win big.</span>
-                    </h1>
-                    <p class="landing-desc">
-                        25 tiles. 2 are lethal. Take turns picking tiles with your opponent.
-                        Hit a danger tile and lose your bet. Last one standing takes the pot.
-                    </p>
+        var btn = document.getElementById('testConnectBtn');
+        var status = document.getElementById('status');
 
-                    <div class="landing-cta">
-                        <button id="playNowBtn" class="btn-play">
-                            <span>Play Now</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="5 3 19 12 5 21 5 3" />
-                            </svg>
-                        </button>
-                    </div>
+        console.log('Button found:', btn);
 
-                    <div class="landing-stats">
-                        <div class="stat">
-                            <span class="stat-num" id="statGames">0</span>
-                            <span class="stat-label">Games</span>
-                        </div>
-                        <div class="stat-divider"></div>
-                        <div class="stat">
-                            <span class="stat-num" id="statWaiting">0</span>
-                            <span class="stat-label">Waiting</span>
-                        </div>
-                        <div class="stat-divider"></div>
-                        <div class="stat">
-                            <span class="stat-num">2x</span>
-                            <span class="stat-label">Payout</span>
-                        </div>
-                    </div>
-                </div>
+        btn.onclick = async function () {
+            console.log('Button clicked!');
+            status.textContent = 'Status: Connecting...';
 
-                <div class="landing-visual">
-                    <div class="grid-preview">
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile danger"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile safe"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile safe"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile"></div>
-                        <div class="preview-tile danger"></div>
-                    </div>
-                </div>
-            </section>
+            if (typeof window.ethereum === 'undefined') {
+                status.textContent = 'Status: MetaMask not installed!';
+                alert('Please install MetaMask!');
+                return;
+            }
 
-            <!-- How It Works Section -->
-            <section id="howItWorksView" class="view how-it-works hidden">
-                <button id="backFromHowItWorks" class="btn-back">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="19" y1="12" x2="5" y2="12" />
-                        <polyline points="12 19 5 12 12 5" />
-                    </svg>
-                    Back
-                </button>
+            try {
+                console.log('Requesting accounts...');
+                var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                console.log('Accounts:', accounts);
 
-                <h2 class="section-title">How It Works</h2>
+                status.textContent = 'Status: Connected! Address: ' + accounts[0];
 
-                <div class="steps-grid">
-                    <div class="step-card">
-                        <div class="step-number">1</div>
-                        <h3>Connect Wallet</h3>
-                        <p>Connect your MetaMask wallet with MON tokens on Monad Testnet.</p>
-                    </div>
+            } catch (err) {
+                console.error('Error:', err);
+                status.textContent = 'Status: Error - ' + err.message;
+            }
+        };
 
-                    <div class="step-card">
-                        <div class="step-number">2</div>
-                        <h3>Choose Stakes</h3>
-                        <p>Select a tier: 1, 5, or 10 MON. You'll be matched with a player in the same tier.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-number">3</div>
-                        <h3>Wait for Match</h3>
-                        <p>Either wait for an opponent, or join an existing game. VRF generates 2 hidden danger tiles.
-                        </p>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-number">4</div>
-                        <h3>Take Turns</h3>
-                        <p>Click tiles in turn. Safe tiles are revealed. Hit a danger tile and you lose!</p>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-number">5</div>
-                        <h3>Win the Pot</h3>
-                        <p>Last player standing wins 2x the bet amount. Payouts are instant and automatic.</p>
-                    </div>
-                </div>
-
-                <div class="info-cards">
-                    <div class="info-card">
-                        <h4>💰 Fee Structure</h4>
-                        <p>Each player pays bet + 1 MON fee. The fee covers VRF randomness and platform costs.</p>
-                    </div>
-                    <div class="info-card">
-                        <h4>🎲 Provably Fair</h4>
-                        <p>Danger tiles are set by Pyth Entropy VRF - verifiable on-chain randomness.</p>
-                    </div>
-                    <div class="info-card">
-                        <h4>⚡ Monad Speed</h4>
-                        <p>Built on Monad Testnet for fast, low-cost transactions.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Lobby View -->
-            <section id="lobbyView" class="view lobby hidden">
-                <div class="lobby-header">
-                    <h2 class="lobby-title">Select Stakes</h2>
-                    <p class="lobby-subtitle">Players are matched within the same tier</p>
-                </div>
-
-                <div class="stakes-grid">
-                    <div class="stake-card" data-tier="0">
-                        <div class="stake-tier">TIER 1</div>
-                        <div class="stake-amount">
-                            <span class="amount-value">1</span>
-                            <span class="amount-currency">MON</span>
-                        </div>
-                        <div class="stake-details">
-                            <div class="detail-row">
-                                <span>Entry fee</span>
-                                <span>+1 MON</span>
-                            </div>
-                            <div class="detail-row total">
-                                <span>Total</span>
-                                <span>2 MON</span>
-                            </div>
-                        </div>
-                        <div class="stake-status" id="stake0Status">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Empty lobby</span>
-                        </div>
-                        <button class="stake-btn" data-tier="0">Enter Game</button>
-                    </div>
-
-                    <div class="stake-card featured" data-tier="1">
-                        <div class="stake-badge">POPULAR</div>
-                        <div class="stake-tier">TIER 2</div>
-                        <div class="stake-amount">
-                            <span class="amount-value">5</span>
-                            <span class="amount-currency">MON</span>
-                        </div>
-                        <div class="stake-details">
-                            <div class="detail-row">
-                                <span>Entry fee</span>
-                                <span>+1 MON</span>
-                            </div>
-                            <div class="detail-row total">
-                                <span>Total</span>
-                                <span>6 MON</span>
-                            </div>
-                        </div>
-                        <div class="stake-status" id="stake1Status">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Empty lobby</span>
-                        </div>
-                        <button class="stake-btn" data-tier="1">Enter Game</button>
-                    </div>
-
-                    <div class="stake-card" data-tier="2">
-                        <div class="stake-tier">TIER 3</div>
-                        <div class="stake-amount">
-                            <span class="amount-value">10</span>
-                            <span class="amount-currency">MON</span>
-                        </div>
-                        <div class="stake-details">
-                            <div class="detail-row">
-                                <span>Entry fee</span>
-                                <span>+1 MON</span>
-                            </div>
-                            <div class="detail-row total">
-                                <span>Total</span>
-                                <span>11 MON</span>
-                            </div>
-                        </div>
-                        <div class="stake-status" id="stake2Status">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Empty lobby</span>
-                        </div>
-                        <button class="stake-btn" data-tier="2">Enter Game</button>
-                    </div>
-                </div>
-
-                <button id="backToLanding" class="btn-back">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="19" y1="12" x2="5" y2="12" />
-                        <polyline points="12 19 5 12 12 5" />
-                    </svg>
-                    Back
-                </button>
-            </section>
-
-            <!-- Game View -->
-            <section id="gameView" class="view game hidden">
-                <div class="game-top">
-                    <div class="game-meta">
-                        <span class="meta-item">
-                            <span class="meta-label">GAME</span>
-                            <span class="meta-value" id="gameId">#0</span>
-                        </span>
-                        <span class="meta-divider">|</span>
-                        <span class="meta-item">
-                            <span class="meta-label">POT</span>
-                            <span class="meta-value" id="gamePot">0 MON</span>
-                        </span>
-                    </div>
-                    <div class="game-state" id="gameState">Waiting for opponent</div>
-                </div>
-
-                <div class="game-arena">
-                    <div class="player-panel left">
-                        <div class="player-card" id="p1Card">
-                            <div class="player-indicator"></div>
-                            <div class="player-info">
-                                <span class="player-label">Player 1</span>
-                                <span class="player-addr" id="p1Addr">-</span>
-                            </div>
-                            <div class="player-you" id="p1You">YOU</div>
-                        </div>
-                    </div>
-
-                    <div class="board-container">
-                        <div class="board" id="gameBoard"></div>
-                        <div class="board-overlay" id="boardOverlay">
-                            <div class="overlay-content">
-                                <div class="spinner"></div>
-                                <span id="overlayText">Waiting...</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="player-panel right">
-                        <div class="player-card" id="p2Card">
-                            <div class="player-indicator"></div>
-                            <div class="player-info">
-                                <span class="player-label">Player 2</span>
-                                <span class="player-addr" id="p2Addr">-</span>
-                            </div>
-                            <div class="player-you" id="p2You">YOU</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="game-bottom">
-                    <button id="exitGameBtn" class="btn-exit">Exit Game</button>
-                </div>
-            </section>
-        </main>
-
-        <!-- Result Overlay -->
-        <div id="resultOverlay" class="result-overlay hidden">
-            <div class="result-card">
-                <div class="result-icon" id="resultIcon">🏆</div>
-                <h2 class="result-title" id="resultTitle">Victory!</h2>
-                <p class="result-info" id="resultInfo">You won 2 MON</p>
-                <button id="resultBtn" class="result-btn">Continue</button>
-            </div>
-        </div>
-
-        <!-- Notifications -->
-        <div id="notifications" class="notifications"></div>
-
-        <!-- Login Modal -->
-        <div id="loginModal" class="login-overlay hidden">
-            <div class="login-card">
-                <button id="closeLoginBtn" class="login-close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
-                <h2 class="login-title">Login to Play</h2>
-                <p class="login-subtitle">Enter your email to get started</p>
-
-                <div id="loginStep1" class="login-step">
-                    <input type="email" id="emailInput" class="login-input" placeholder="your@email.com">
-                    <button id="sendCodeBtn" class="login-btn">Send Code</button>
-                </div>
-
-                <div id="loginStep2" class="login-step hidden">
-                    <p class="login-info">We sent a code to your email</p>
-                    <input type="text" id="otpInput" class="login-input" placeholder="Enter code" maxlength="6">
-                    <button id="verifyCodeBtn" class="login-btn">Verify</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="main.js"></script>
+        console.log('Event listener attached');
+    </script>
 </body>
 
 </html>
