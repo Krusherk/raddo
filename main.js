@@ -1,11 +1,11 @@
 // ============ Config ============
-const CONTRACT_ADDRESS = '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4';
-const CHAIN_ID = 10143;
-const CHAIN_NAME = 'Monad Testnet';
-const RPC_URL = 'https://testnet-rpc.monad.xyz';
-const EXPLORER = 'https://testnet.monadexplorer.com';
+var CONTRACT_ADDRESS = '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4';
+var CHAIN_ID = 10143;
+var CHAIN_NAME = 'Monad Testnet';
+var RPC_URL = 'https://testnet-rpc.monad.xyz';
+var EXPLORER = 'https://testnet.monadexplorer.com';
 
-const CONTRACT_ABI = [
+var CONTRACT_ABI = [
     "event GameCreated(uint256 indexed gameId, address indexed player1, uint8 tier, uint256 betAmount)",
     "event GameStarted(uint256 indexed gameId, address indexed player2)",
     "event DangerousTilesSet(uint256 indexed gameId)",
@@ -20,20 +20,20 @@ const CONTRACT_ABI = [
     "function playerActiveGame(address player) external view returns (uint256)"
 ];
 
-const GameState = { WaitingForPlayer: 0, WaitingForVRF: 1, InProgress: 2, Finished: 3 };
-const BET_AMOUNTS = { 0: 1, 1: 5, 2: 10 };
+var GameState = { WaitingForPlayer: 0, WaitingForVRF: 1, InProgress: 2, Finished: 3 };
+var BET_AMOUNTS = { 0: 1, 1: 5, 2: 10 };
 
 // ============ State ============
-let provider = null;
-let signer = null;
-let contract = null;
-let userAddress = null;
-let currentGameId = null;
-let dropdownOpen = false;
+var provider = null;
+var signer = null;
+var contract = null;
+var userAddress = null;
+var currentGameId = null;
+var dropdownOpen = false;
 
-// ============ Wait for DOM ============
-window.addEventListener('load', function () {
-    console.log('Page loaded, initializing...');
+// ============ Initialize when DOM is ready ============
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM ready, initializing...');
     init();
 });
 
