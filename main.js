@@ -80,16 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function bindEvents() {
-    dom.connectBtn.addEventListener('click', handleWalletClick);
+    console.log('Binding events...');
+    console.log('connectBtn element:', dom.connectBtn);
+
+    if (dom.connectBtn) {
+        dom.connectBtn.addEventListener('click', handleWalletClick);
+        console.log('Connect button event bound');
+    } else {
+        console.error('Connect button not found!');
+    }
+
     dom.copyAddressBtn?.addEventListener('click', copyAddress);
     dom.disconnectBtn?.addEventListener('click', disconnectWallet);
-    dom.playNowBtn.addEventListener('click', () => {
-        if (!userAddress) {
-            connectWallet();
-        } else {
-            showView('lobby');
-        }
-    });
+
+    if (dom.playNowBtn) {
+        dom.playNowBtn.addEventListener('click', () => {
+            if (!userAddress) {
+                connectWallet();
+            } else {
+                showView('lobby');
+            }
+        });
+    }
     dom.howItWorksLink?.addEventListener('click', (e) => {
         e.preventDefault();
         showView('howItWorks');
