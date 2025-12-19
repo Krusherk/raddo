@@ -1,12 +1,9 @@
-import Privy, { LocalStorage, getUserEmbeddedEthereumWallet, getEntropyDetailsFromUser } from '@privy-io/js-sdk-core';
-import { ethers } from 'ethers';
-
 // ============ Config ============
-const PRIVY_APP_ID = 'cmjcmiiki01h1l70c34v067nj';
 const CONTRACT_ADDRESS = '0xE6D70350224FA26aC9d0F88D0110F44e0F8f36C4';
 const CHAIN_ID = 10143;
 const CHAIN_NAME = 'Monad Testnet';
 const RPC_URL = 'https://testnet-rpc.monad.xyz';
+const EXPLORER = 'https://testnet.monadexplorer.com';
 
 const CONTRACT_ABI = [
     "event GameCreated(uint256 indexed gameId, address indexed player1, uint8 tier, uint256 betAmount)",
@@ -28,15 +25,12 @@ const GameState = { WaitingForPlayer: 0, WaitingForVRF: 1, InProgress: 2, Finish
 const BET_AMOUNTS = { 0: 1, 1: 5, 2: 10 };
 
 // ============ State ============
-let privy = null;
-let privyProvider = null;
-let ethersProvider = null;
+let provider = null;
 let signer = null;
 let contract = null;
 let userAddress = null;
 let currentGameId = null;
 let dropdownOpen = false;
-let privyUser = null;
 
 // ============ DOM ============
 const $ = (sel) => document.querySelector(sel);
@@ -75,57 +69,15 @@ const dom = {
     resultTitle: $('#resultTitle'),
     resultInfo: $('#resultInfo'),
     resultBtn: $('#resultBtn'),
-    notifications: $('#notifications'),
-    loginModal: $('#loginModal'),
-    emailInput: $('#emailInput'),
-    sendCodeBtn: $('#sendCodeBtn'),
-    otpInput: $('#otpInput'),
-    verifyCodeBtn: $('#verifyCodeBtn'),
-    closeLoginBtn: $('#closeLoginBtn'),
-    loginStep1: $('#loginStep1'),
-    loginStep2: $('#loginStep2')
+    notifications: $('#notifications')
 };
 
 // ============ Init ============
-document.addEventListener('DOMContentLoaded', async () => {
-    await initPrivy();
+document.addEventListener('DOMContentLoaded', () => {
     createBoard();
     bindEvents();
-    await checkExistingSession();
+    checkExistingConnection();
 });
-
-async function initPrivy() {
-    privy = new Privy({
-        appId: PRIVY_APP_ID,
-        storage: new LocalStorage(),
-        supportedChains: [
-            {
-                id: CHAIN_ID,
-                name: CHAIN_NAME,
-                rpcUrls: { default: { http: [RPC_URL] } },
-                nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 }
-            }
-        ]
-    });
-
-    // Create hidden iframe for secure wallet context
-    const iframeUrl = privy.embeddedWallet.getURL();
-    const iframe = document.createElement('iframe');
-    iframe.src = iframeUrl;
-    iframe.style.display = 'none';
-    iframe.id = 'privy-iframe';
-    document.body.appendChild(iframe);
-
-    iframe.onload = () => {
-        privy.setMessagePoster(iframe.contentWindow);
-    };
-
-    window.addEventListener('message', (e) => {
-        if (e.origin.includes('privy')) {
-            privy.embeddedWallet.onMessage(e.data);
-        }
-    });
-}
 
 function bindEvents() {
     dom.connectBtn.addEventListener('click', handleWalletClick);
@@ -133,7 +85,7 @@ function bindEvents() {
     dom.disconnectBtn?.addEventListener('click', disconnectWallet);
     dom.playNowBtn.addEventListener('click', () => {
         if (!userAddress) {
-            showLoginModal();
+            connectWallet();
         } else {
             showView('lobby');
         }
@@ -147,11 +99,6 @@ function bindEvents() {
     dom.exitGameBtn?.addEventListener('click', exitGame);
     dom.resultBtn?.addEventListener('click', closeResult);
 
-    // Login modal events
-    dom.sendCodeBtn?.addEventListener('click', sendEmailCode);
-    dom.verifyCodeBtn?.addEventListener('click', verifyEmailCode);
-    dom.closeLoginBtn?.addEventListener('click', hideLoginModal);
-
     $$('.stake-btn').forEach(btn => {
         btn.addEventListener('click', () => joinGame(parseInt(btn.dataset.tier)));
     });
@@ -163,147 +110,25 @@ function bindEvents() {
     });
 }
 
-async function checkExistingSession() {
-    try {
-        const session = await privy.auth.getSession();
-        if (session && session.user) {
-            await setupWalletFromSession(session.user);
+async function checkExistingConnection() {
+    if (typeof window.ethereum !== 'undefined') {
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                await connectWallet();
+            }
+        } catch (e) {
+            console.log('No existing connection');
         }
-    } catch (e) {
-        console.log('No existing session');
-    }
-}
-
-// ============ Login Modal ============
-let pendingEmail = '';
-
-function showLoginModal() {
-    dom.loginModal?.classList.remove('hidden');
-    dom.loginStep1?.classList.remove('hidden');
-    dom.loginStep2?.classList.add('hidden');
-    dom.emailInput.value = '';
-    dom.otpInput.value = '';
-}
-
-function hideLoginModal() {
-    dom.loginModal?.classList.add('hidden');
-}
-
-async function sendEmailCode() {
-    const email = dom.emailInput?.value?.trim();
-    if (!email || !email.includes('@')) {
-        notify('Please enter a valid email', 'error');
-        return;
-    }
-
-    try {
-        dom.sendCodeBtn.disabled = true;
-        dom.sendCodeBtn.textContent = 'Sending...';
-
-        await privy.auth.email.sendCode(email);
-        pendingEmail = email;
-
-        dom.loginStep1?.classList.add('hidden');
-        dom.loginStep2?.classList.remove('hidden');
-        notify('Code sent to your email!', 'success');
-
-    } catch (err) {
-        console.error(err);
-        notify('Failed to send code', 'error');
-    } finally {
-        dom.sendCodeBtn.disabled = false;
-        dom.sendCodeBtn.textContent = 'Send Code';
-    }
-}
-
-async function verifyEmailCode() {
-    const code = dom.otpInput?.value?.trim();
-    if (!code || code.length < 4) {
-        notify('Please enter the code', 'error');
-        return;
-    }
-
-    try {
-        dom.verifyCodeBtn.disabled = true;
-        dom.verifyCodeBtn.textContent = 'Verifying...';
-
-        const session = await privy.auth.email.loginWithCode(pendingEmail, code);
-        hideLoginModal();
-
-        await setupWalletFromSession(session.user);
-        notify('Logged in successfully!', 'success');
-
-    } catch (err) {
-        console.error(err);
-        notify('Invalid code', 'error');
-    } finally {
-        dom.verifyCodeBtn.disabled = false;
-        dom.verifyCodeBtn.textContent = 'Verify';
     }
 }
 
 // ============ Wallet ============
-async function setupWalletFromSession(user) {
-    privyUser = user;
-
-    // Get or create embedded wallet
-    let wallet = getUserEmbeddedEthereumWallet(user);
-
-    if (!wallet) {
-        // Create embedded wallet
-        const result = await privy.embeddedWallet.create({});
-        wallet = getUserEmbeddedEthereumWallet(result.user);
-        privyUser = result.user;
-    }
-
-    userAddress = wallet.address;
-
-    // Get entropy details for provider
-    const { entropyId, entropyIdVerifier } = getEntropyDetailsFromUser(privyUser);
-
-    // Get Privy provider
-    privyProvider = await privy.embeddedWallet.getEthereumProvider({
-        wallet,
-        entropyId,
-        entropyIdVerifier
-    });
-
-    // Switch to Monad
-    try {
-        await privyProvider.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${CHAIN_ID.toString(16)}` }]
-        });
-    } catch (e) {
-        console.log('Chain switch:', e);
-    }
-
-    // Create ethers provider/signer
-    ethersProvider = new ethers.BrowserProvider(privyProvider);
-    signer = await ethersProvider.getSigner();
-    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-    // Update UI
-    dom.connectBtn.innerHTML = `<span class="connect-text">${truncate(userAddress)}</span>`;
-    dom.connectBtn.classList.add('connected');
-
-    await updateBalance();
-    setupEvents();
-    await checkActiveGame();
-    await updateStats();
-
-    setInterval(() => {
-        if (currentGameId) refreshGame();
-        else updateStats();
-        updateBalance();
-    }, 5000);
-}
-
 function handleWalletClick() {
     if (userAddress) {
         toggleDropdown();
     } else {
-        showLoginModal();
+        connectWallet();
     }
 }
 
@@ -325,23 +150,15 @@ function copyAddress() {
     }
 }
 
-async function disconnectWallet() {
-    try {
-        await privy.auth.logout();
-    } catch (e) {
-        console.log('Logout error:', e);
-    }
-
+function disconnectWallet() {
     userAddress = null;
-    privyProvider = null;
-    ethersProvider = null;
+    provider = null;
     signer = null;
     contract = null;
     currentGameId = null;
-    privyUser = null;
 
     dom.connectBtn.innerHTML = `
-    <span class="connect-text">Login</span>
+    <span class="connect-text">Connect</span>
     <svg class="connect-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
       <polyline points="10 17 15 12 10 7"/>
@@ -352,19 +169,96 @@ async function disconnectWallet() {
     dom.balanceDisplay?.classList.add('hidden');
     closeDropdown();
     showView('landing');
-    notify('Logged out', 'info');
+    notify('Wallet disconnected', 'info');
+}
+
+async function connectWallet() {
+    console.log('Connect wallet clicked');
+
+    if (typeof window.ethereum === 'undefined') {
+        notify('Please install MetaMask!', 'error');
+        return;
+    }
+
+    try {
+        notify('Connecting wallet...', 'info');
+
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        console.log('Accounts:', accounts);
+
+        userAddress = accounts[0];
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+
+        const network = await provider.getNetwork();
+        console.log('Network:', network.chainId);
+
+        if (Number(network.chainId) !== CHAIN_ID) {
+            await switchNetwork();
+        }
+
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        console.log('Contract ready');
+
+        dom.connectBtn.innerHTML = `<span class="connect-text">${truncate(userAddress)}</span>`;
+        dom.connectBtn.classList.add('connected');
+
+        await updateBalance();
+        setupEvents();
+        await checkActiveGame();
+        await updateStats();
+
+        setInterval(() => {
+            if (currentGameId) refreshGame();
+            else updateStats();
+            updateBalance();
+        }, 5000);
+
+        notify('Wallet connected!', 'success');
+
+    } catch (err) {
+        console.error('Connection error:', err);
+        notify(err.message || 'Connection failed', 'error');
+    }
 }
 
 async function updateBalance() {
-    if (!ethersProvider || !userAddress) return;
+    if (!provider || !userAddress) return;
 
     try {
-        const balance = await ethersProvider.getBalance(userAddress);
+        const balance = await provider.getBalance(userAddress);
         const formatted = parseFloat(ethers.formatEther(balance)).toFixed(2);
         if (dom.balanceValue) dom.balanceValue.textContent = formatted;
         dom.balanceDisplay?.classList.remove('hidden');
     } catch (err) {
         console.error('Balance error:', err);
+    }
+}
+
+async function switchNetwork() {
+    const chainIdHex = '0x' + CHAIN_ID.toString(16);
+
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: chainIdHex }]
+        });
+    } catch (err) {
+        if (err.code === 4902) {
+            await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId: chainIdHex,
+                    chainName: CHAIN_NAME,
+                    nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+                    rpcUrls: [RPC_URL],
+                    blockExplorerUrls: [EXPLORER]
+                }]
+            });
+        } else {
+            throw err;
+        }
     }
 }
 
@@ -413,7 +307,7 @@ function setupEvents() {
 // ============ Game Actions ============
 async function joinGame(tier) {
     if (!contract) {
-        notify('Please login first', 'error');
+        notify('Connect wallet first', 'error');
         return;
     }
 
