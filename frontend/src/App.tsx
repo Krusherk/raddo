@@ -113,7 +113,7 @@ function App() {
                 const myAddress = wallets[0].address.toLowerCase();
                 let player1Address = '';
 
-                contract.on('GameCreated', async (gameId, player1) => {
+                contract.on('GameCreated', async (gameId: bigint, player1: string) => {
                     loadStats();
                     if (player1.toLowerCase() === myAddress) {
                         setCurrentGameId(Number(gameId));
@@ -127,21 +127,21 @@ function App() {
                     }
                 });
 
-                contract.on('GameStarted', async (gameId) => {
+                contract.on('GameStarted', async (gameId: bigint) => {
                     if (Number(gameId) === currentGameId) {
                         await refreshGame();
                         notify('Opponent joined!', 'success');
                     }
                 });
 
-                contract.on('DangerousTilesSet', async (gameId) => {
+                contract.on('DangerousTilesSet', async (gameId: bigint) => {
                     if (Number(gameId) === currentGameId) {
                         await refreshGame();
                         notify('Game started!', 'success');
                     }
                 });
 
-                contract.on('MoveMade', async (gameId, player, tile, hitDanger) => {
+                contract.on('MoveMade', async (gameId: bigint, player: string, tile: bigint, hitDanger: boolean) => {
                     if (Number(gameId) === currentGameId) {
                         const tileIndex = Number(tile);
                         const isP1 = player.toLowerCase() === player1Address.toLowerCase();
@@ -158,7 +158,7 @@ function App() {
                     }
                 });
 
-                contract.on('GameFinished', async (gameId, winner, payout) => {
+                contract.on('GameFinished', async (gameId: bigint, winner: string, payout: bigint) => {
                     if (Number(gameId) === currentGameId) {
                         const won = winner.toLowerCase() === myAddress;
                         setGameResult({ won, payout: formatEther(payout) });
