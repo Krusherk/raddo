@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useContract } from '../hooks/useContract';
+import { useWallets } from '@privy-io/react-auth';
 import { BET_AMOUNTS } from '../config/contract';
 
 interface LobbyProps {
@@ -8,16 +9,24 @@ interface LobbyProps {
     onGameJoined: (gameId: number) => void;
 }
 
-export function Lobby({ waitingGames, onBack }: LobbyProps) {
-    const { joinGame, loading } = useContract();
+export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
+    const { joinGame, getActiveGame, loading } = useContract();
+    const { wallets } = useWallets();
     const [joining, setJoining] = useState<number | null>(null);
 
     const handleJoinGame = async (tier: number) => {
         setJoining(tier);
         try {
             await joinGame(tier);
-            // After joining, poll for the game ID
-            // Contract events will handle navigation
+            // Poll for active game after joining
+            if (wallets[0]?.address) {
+                // Small delay to let blockchain update
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                const gameId = await getActiveGame(wallets[0].address);
+                if (gameId > 0) {
+                    onGameJoined(gameId);
+                }
+            }
         } catch (err) {
             console.error('Failed to join game:', err);
         } finally {
