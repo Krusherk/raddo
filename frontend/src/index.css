@@ -1571,3 +1571,258 @@ button {
     font-size: 1rem;
   }
 }
+
+/* ============ Withdraw Modal ============ */
+.withdraw-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 11, 0.95);
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+.withdraw-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  margin: 1rem;
+}
+
+.withdraw-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: 8px;
+  transition: all var(--duration);
+}
+
+.withdraw-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.withdraw-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.withdraw-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.withdraw-subtitle {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.withdraw-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.withdraw-balance .balance-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.withdraw-balance .balance-amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.withdraw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.max-btn {
+  padding: 0.25rem 0.5rem;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all var(--duration);
+}
+
+.max-btn:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.withdraw-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: var(--font-mono);
+  transition: border-color var(--duration);
+}
+
+.withdraw-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.withdraw-input::placeholder {
+  color: var(--text-muted);
+}
+
+.amount-input-wrapper {
+  position: relative;
+}
+
+.amount-input-wrapper .withdraw-input {
+  padding-right: 4rem;
+}
+
+.amount-suffix {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.withdraw-error {
+  padding: 0.75rem;
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.withdraw-btn {
+  width: 100%;
+  padding: 1rem;
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all var(--duration);
+  margin-top: 0.5rem;
+}
+
+.withdraw-btn:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.withdraw-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.withdraw-success {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.withdraw-success h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.withdraw-success p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.tx-link {
+  display: inline-block;
+  color: var(--accent);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  transition: opacity var(--duration);
+}
+
+.tx-link:hover {
+  opacity: 0.8;
+}
+
+/* Dropdown improvements */
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.5rem 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+}
+
+.dropdown-item.danger {
+  color: var(--danger);
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(255, 71, 87, 0.1);
+  color: var(--danger);
+}
