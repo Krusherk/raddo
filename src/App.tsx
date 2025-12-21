@@ -7,12 +7,13 @@ import { Lobby } from './components/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { HowItWorks } from './components/HowItWorks';
 import { ResultModal } from './components/ResultModal';
+import { Leaderboard } from './components/Leaderboard';
 import { useContract } from './hooks/useContract';
 import type { GameData } from './hooks/useContract';
 import { GameState } from './config/contract';
 import './App.css';
 
-type View = 'landing' | 'lobby' | 'game' | 'howItWorks';
+type View = 'landing' | 'lobby' | 'game' | 'howItWorks' | 'leaderboard';
 
 function App() {
     const { authenticated } = usePrivy();
@@ -240,6 +241,7 @@ function App() {
                             totalGames={totalGames}
                             waitingGames={waitingGames.filter(g => g > 0).length}
                             onPlay={handlePlay}
+                            onLeaderboard={() => setView('leaderboard')}
                         />
                     )}
 
@@ -264,6 +266,10 @@ function App() {
 
                     {view === 'howItWorks' && (
                         <HowItWorks onBack={() => setView('landing')} />
+                    )}
+
+                    {view === 'leaderboard' && (
+                        <Leaderboard onBack={() => setView('landing')} />
                     )}
                 </main>
 

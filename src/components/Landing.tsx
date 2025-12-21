@@ -4,9 +4,10 @@ interface LandingProps {
     totalGames: number;
     waitingGames: number;
     onPlay: () => void;
+    onLeaderboard: () => void;
 }
 
-export function Landing({ totalGames, waitingGames, onPlay }: LandingProps) {
+export function Landing({ totalGames, waitingGames, onPlay, onLeaderboard }: LandingProps) {
     const { authenticated, login } = usePrivy();
 
     const handlePlayClick = () => {
@@ -76,6 +77,14 @@ export function Landing({ totalGames, waitingGames, onPlay }: LandingProps) {
                     <div className="preview-tile"></div>
                     <div className="preview-tile danger"></div>
                 </div>
+                
+                <button className="btn-leaderboard-visual" onClick={onLeaderboard}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 3v18h18" />
+                        <path d="M18 17V9M13 17V5M8 17v-3" />
+                    </svg>
+                    <span>View Leaderboard</span>
+                </button>
             </div>
         </section>
     );
