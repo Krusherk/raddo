@@ -118,13 +118,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 1rem 2.5rem;
   border-bottom: 1px solid var(--border);
-  background: rgba(10, 10, 11, 0.8);
+  background: rgba(10, 10, 11, 0.9);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 100;
+  min-height: 64px;
 }
 
 .nav-brand {
@@ -145,7 +146,7 @@ button {
 }
 
 .brand-text {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: var(--text-primary);
@@ -153,6 +154,12 @@ button {
 
 .brand-accent {
   color: var(--accent);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .nav-status {
@@ -201,13 +208,14 @@ button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   background: var(--accent);
   color: var(--bg-primary);
   font-weight: 600;
-  font-size: 0.875rem;
-  border-radius: 8px;
+  font-size: 0.9375rem;
+  border-radius: 10px;
   transition: all var(--duration) var(--ease-out);
+  white-space: nowrap;
 }
 
 .connect-btn:hover {
@@ -222,8 +230,30 @@ button {
 }
 
 .connect-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+}
+
+.balance-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9375rem;
+}
+
+.balance-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.balance-currency {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 /* ============ Main ============ */
@@ -1565,9 +1595,10 @@ button {
 }
 
 /* Extra small screens */
-@media (max-width: 400px) {
+@media (max-width: 480px) {
   .nav {
-    padding: 0.5rem 0.75rem;
+    padding: 0.625rem 0.75rem;
+    min-height: 56px;
   }
 
   .brand-text {
@@ -1579,8 +1610,30 @@ button {
     height: 24px;
   }
 
+  /* Keep balance visible on mobile but compact */
   .balance-display {
-    display: none;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .balance-value {
+    font-size: 0.8125rem;
+  }
+
+  .balance-currency {
+    font-size: 0.625rem;
+  }
+
+  .connect-btn {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .connect-text {
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .landing-title {
