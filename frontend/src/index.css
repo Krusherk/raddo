@@ -1650,6 +1650,45 @@ button {
   }
 }
 
+/* ============ Mobile Footer ============ */
+.mobile-footer {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color var(--duration);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.footer-link:hover {
+  color: var(--accent);
+}
+
+.footer-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 900px) {
+  .mobile-footer {
+    display: flex;
+  }
+}
+
 /* ============ Withdraw Modal ============ */
 .withdraw-overlay {
   position: fixed;
