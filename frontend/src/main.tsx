@@ -1,3 +1,7 @@
+import { Buffer } from 'buffer';
+// @ts-ignore
+window.Buffer = Buffer;
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { PrivyProvider } from '@privy-io/react-auth';
