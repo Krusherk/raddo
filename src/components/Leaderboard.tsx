@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, type LeaderboardEntry } from '../lib/supabase';
+import { getLeaderboard, type LeaderboardEntry } from '../lib/firebase';
 
 interface LeaderboardProps {
     onBack: () => void;
@@ -14,14 +14,16 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
     const fetchLeaderboard = async () => {
         try {
             setError(null);
-            const { data, error: fetchError } = await supabase
-                .from('leaderboard')
-                .select('*')
-                .order(sortBy === 'earnings' ? 'total_earnings' : sortBy === 'games' ? 'total_games' : 'wins', { ascending: false })
-                .limit(20);
+            const data = await getLeaderboard(20);
 
-            if (fetchError) throw fetchError;
-            setLeaderboard(data || []);
+            // Sort based on selected filter
+            const sorted = [...data].sort((a, b) => {
+                if (sortBy === 'earnings') return (b.total_earnings || 0) - (a.total_earnings || 0);
+                if (sortBy === 'games') return (b.total_games || 0) - (a.total_games || 0);
+                return (b.wins || 0) - (a.wins || 0);
+            });
+
+            setLeaderboard(sorted);
         } catch (err) {
             console.error('Error fetching leaderboard:', err);
             setError('Failed to load leaderboard data');
@@ -41,8 +43,8 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
     const truncateAddress = (addr: string) =>
         `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
+    const formatDate = (timestamp: number) => {
+        const date = new Date(timestamp);
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
@@ -160,10 +162,10 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                             {leaderboard.map((entry, index) => {
                                 const rank = index + 1;
                                 const isTopThree = rank <= 3;
-                                const winRate = getWinRate(entry.wins, entry.losses);
+                                const winRate = getWinRate(entry.wins || 0, entry.losses || 0);
 
                                 return (
-                                    <tr key={entry.id} className={`leaderboard-row ${isTopThree ? 'top-three' : ''}`}>
+                                    <tr key={entry.player_address} className={`leaderboard-row ${isTopThree ? 'top-three' : ''}`}>
                                         <td className="col-rank">
                                             <span className={`rank-badge ${isTopThree ? 'medal' : ''}`}>
                                                 {getRankBadge(rank)}
@@ -178,9 +180,9 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                                             </div>
                                         </td>
                                         <td className="col-record">
-                                            <span className="record-wins">{entry.wins}</span>
+                                            <span className="record-wins">{entry.wins || 0}</span>
                                             <span className="record-separator">/</span>
-                                            <span className="record-losses">{entry.losses}</span>
+                                            <span className="record-losses">{entry.losses || 0}</span>
                                         </td>
                                         <td className="col-winrate">
                                             <div className="winrate-container">
@@ -194,10 +196,10 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                                             </div>
                                         </td>
                                         <td className="col-score">
-                                            <span className="score-value">{entry.total_earnings.toFixed(1)} MON</span>
+                                            <span className="score-value">{(entry.total_earnings || 0).toFixed(1)} MON</span>
                                         </td>
                                         <td className="col-date">
-                                            <span className="date-value">{formatDate(entry.updated_at)}</span>
+                                            <span className="date-value">{formatDate(entry.updated_at || Date.now())}</span>
                                         </td>
                                     </tr>
                                 );
