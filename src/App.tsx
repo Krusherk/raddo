@@ -14,7 +14,7 @@ import { Game } from './components/Game';
 import { useContract } from './hooks/useContract';
 import type { GameData } from './hooks/useContract';
 import { GameState } from './config/contract';
-import { updatePlayerStats } from './lib/supabase';
+import { updatePlayerStats } from './lib/firebase';
 import './App.css';
 
 function App() {
