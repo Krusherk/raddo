@@ -9,6 +9,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [sortBy, setSortBy] = useState<'wins' | 'earnings' | 'games'>('wins');
 
     const fetchLeaderboard = async () => {
         try {
@@ -16,8 +17,8 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
             const { data, error: fetchError } = await supabase
                 .from('leaderboard')
                 .select('*')
-                .order('total_games', { ascending: false })
-                .limit(10);
+                .order(sortBy === 'earnings' ? 'total_earnings' : sortBy === 'games' ? 'total_games' : 'wins', { ascending: false })
+                .limit(20);
 
             if (fetchError) throw fetchError;
             setLeaderboard(data || []);
@@ -31,13 +32,13 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
 
     useEffect(() => {
         fetchLeaderboard();
-        
+
         // Refresh every 30 seconds
         const interval = setInterval(fetchLeaderboard, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [sortBy]);
 
-    const truncateAddress = (addr: string) => 
+    const truncateAddress = (addr: string) =>
         `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
     const formatDate = (dateStr: string) => {
@@ -48,7 +49,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
 
         if (date.toDateString() === today.toDateString()) return 'Today';
         if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
     const getRankBadge = (rank: number) => {
@@ -56,6 +57,12 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
         if (rank === 2) return '🥈';
         if (rank === 3) return '🥉';
         return `#${rank}`;
+    };
+
+    const getWinRate = (wins: number, losses: number) => {
+        const total = wins + losses;
+        if (total === 0) return 0;
+        return Math.round((wins / total) * 100);
     };
 
     if (loading) {
@@ -68,6 +75,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                     Back
                 </button>
                 <div className="leaderboard-loading">
+                    <div className="spinner"></div>
                     <p>Loading leaderboard...</p>
                 </div>
             </section>
@@ -108,6 +116,27 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                     </h1>
                     <p className="leaderboard-subtitle">Top players competing on TAKKOFUN</p>
                 </div>
+
+                <div className="leaderboard-filters">
+                    <button
+                        className={`filter-btn ${sortBy === 'wins' ? 'active' : ''}`}
+                        onClick={() => setSortBy('wins')}
+                    >
+                        Most Wins
+                    </button>
+                    <button
+                        className={`filter-btn ${sortBy === 'earnings' ? 'active' : ''}`}
+                        onClick={() => setSortBy('earnings')}
+                    >
+                        Top Earners
+                    </button>
+                    <button
+                        className={`filter-btn ${sortBy === 'games' ? 'active' : ''}`}
+                        onClick={() => setSortBy('games')}
+                    >
+                        Most Active
+                    </button>
+                </div>
             </div>
 
             {leaderboard.length === 0 ? (
@@ -121,14 +150,17 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                             <tr>
                                 <th className="col-rank">Rank</th>
                                 <th className="col-player">Player</th>
-                                <th className="col-games">Games Played</th>
-                                <th className="col-date">Joined</th>
+                                <th className="col-record">W/L</th>
+                                <th className="col-winrate">Win Rate</th>
+                                <th className="col-score">Earnings</th>
+                                <th className="col-date">Last Active</th>
                             </tr>
                         </thead>
                         <tbody>
                             {leaderboard.map((entry, index) => {
                                 const rank = index + 1;
                                 const isTopThree = rank <= 3;
+                                const winRate = getWinRate(entry.wins, entry.losses);
 
                                 return (
                                     <tr key={entry.id} className={`leaderboard-row ${isTopThree ? 'top-three' : ''}`}>
@@ -145,11 +177,27 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                                                 <span className="player-address">{truncateAddress(entry.player_address)}</span>
                                             </div>
                                         </td>
-                                        <td className="col-games">
-                                            <span className="games-value">{entry.total_games}</span>
+                                        <td className="col-record">
+                                            <span className="record-wins">{entry.wins}</span>
+                                            <span className="record-separator">/</span>
+                                            <span className="record-losses">{entry.losses}</span>
+                                        </td>
+                                        <td className="col-winrate">
+                                            <div className="winrate-container">
+                                                <span className="winrate-value">{winRate}%</span>
+                                                <div className="winrate-bar">
+                                                    <div
+                                                        className="winrate-fill"
+                                                        style={{ width: `${winRate}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="col-score">
+                                            <span className="score-value">{entry.total_earnings.toFixed(1)} MON</span>
                                         </td>
                                         <td className="col-date">
-                                            <span className="date-value">{formatDate(entry.created_at)}</span>
+                                            <span className="date-value">{formatDate(entry.updated_at)}</span>
                                         </td>
                                     </tr>
                                 );
@@ -161,7 +209,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
 
             <div className="leaderboard-footer">
                 <p className="footer-note">
-                    Rankings update in real-time based on total games played
+                    Rankings update in real-time after each game
                 </p>
             </div>
         </section>
