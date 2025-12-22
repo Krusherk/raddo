@@ -8,11 +8,13 @@ import { Lobby } from './components/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { HowItWorks } from './components/HowItWorks';
 import { ResultModal } from './components/ResultModal';
+import { DepositModal } from './components/DepositModal';
 import { Leaderboard } from './components/Leaderboard';
 import { Game } from './components/Game';
 import { useContract } from './hooks/useContract';
 import type { GameData } from './hooks/useContract';
 import { GameState } from './config/contract';
+import { updatePlayerStats } from './lib/supabase';
 import './App.css';
 
 function App() {
@@ -21,6 +23,7 @@ function App() {
     const { wallets } = useWallets();
     const {
         getContract,
+        getBalance,
         makeMove,
         getGame,
         getActiveGame,
@@ -37,6 +40,11 @@ function App() {
     const [showResult, setShowResult] = useState(false);
     const [gameResult, setGameResult] = useState<{ won: boolean; payout: string } | null>(null);
     const [notifications, setNotifications] = useState<Array<{ id: number; msg: string; type: string }>>([]);
+
+    // Deposit modal state
+    const [showDeposit, setShowDeposit] = useState(false);
+    const [walletBalance, setWalletBalance] = useState('0.00');
+    const [hasShownDeposit, setHasShownDeposit] = useState(false);
 
     // Notification helper
     const notify = useCallback((msg: string, type: string = 'info') => {
@@ -66,6 +74,18 @@ function App() {
         }
     }, [authenticated, wallets, getGameCounter, getWaitingGame]);
 
+    // Refresh wallet balance
+    const refreshBalance = useCallback(async () => {
+        if (wallets.length > 0) {
+            try {
+                const balance = await getBalance();
+                setWalletBalance(balance);
+            } catch (err) {
+                console.error('Failed to get balance:', err);
+            }
+        }
+    }, [wallets, getBalance]);
+
     // Check for active game on login
     useEffect(() => {
         if (authenticated && wallets.length > 0) {
@@ -82,8 +102,17 @@ function App() {
             };
             checkActiveGame();
             loadStats();
+            refreshBalance();
+
+            // Show deposit modal for new users (first time per session)
+            if (!hasShownDeposit) {
+                setTimeout(() => {
+                    setShowDeposit(true);
+                    setHasShownDeposit(true);
+                }, 500);
+            }
         }
-    }, [authenticated, wallets, getActiveGame, getGame, loadStats]);
+    }, [authenticated, wallets, getActiveGame, getGame, loadStats, refreshBalance, hasShownDeposit, navigate]);
 
     // Refresh game state
     const refreshGame = useCallback(async () => {
@@ -164,6 +193,23 @@ function App() {
                         const won = winner.toLowerCase() === myAddress;
                         setGameResult({ won, payout: formatEther(payout) });
                         setShowResult(true);
+
+                        // Update leaderboard stats
+                        try {
+                            const game = await getGame(Number(gameId));
+                            if (game) {
+                                const loser = winner.toLowerCase() === game.player1.toLowerCase()
+                                    ? game.player2
+                                    : game.player1;
+
+                                // Update winner stats
+                                await updatePlayerStats(winner, true, parseFloat(formatEther(payout)));
+                                // Update loser stats
+                                await updatePlayerStats(loser, false, 0);
+                            }
+                        } catch (err) {
+                            console.error('Failed to update leaderboard:', err);
+                        }
                     }
                 });
             } catch (err) {
@@ -178,7 +224,7 @@ function App() {
                 contract.removeAllListeners();
             }
         };
-    }, [authenticated, wallets, getContract, getGame, loadStats, refreshGame, currentGameId, notify]);
+    }, [authenticated, wallets, getContract, getGame, loadStats, refreshGame, currentGameId, notify, navigate]);
 
     // Handle tile click
     const handleTileClick = async (tile: number) => {
@@ -206,6 +252,7 @@ function App() {
         setGameResult(null);
         handleExitGame();
         loadStats();
+        refreshBalance();
     };
 
     // Handle play click
@@ -295,6 +342,14 @@ function App() {
                         won={gameResult.won}
                         payout={gameResult.payout}
                         onClose={handleResultClose}
+                    />
+                )}
+
+                {showDeposit && (
+                    <DepositModal
+                        balance={walletBalance}
+                        onClose={() => setShowDeposit(false)}
+                        onRefresh={refreshBalance}
                     />
                 )}
 
