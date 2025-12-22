@@ -10,7 +10,6 @@ import { HowItWorks } from './components/HowItWorks';
 import { ResultModal } from './components/ResultModal';
 import { DepositModal } from './components/DepositModal';
 import { Leaderboard } from './components/Leaderboard';
-import { Game } from './components/Game';
 import { useContract } from './hooks/useContract';
 import type { GameData } from './hooks/useContract';
 import { GameState } from './config/contract';
@@ -289,8 +288,6 @@ function App() {
                                 totalGames={totalGames}
                                 waitingGames={waitingGames.filter(g => g > 0).length}
                                 onPlay={handlePlay}
-                                onLeaderboard={() => navigate('/leaderboard')}
-                                onDemo={() => navigate('/play-demo')}
                             />
                         } />
                         <Route path="/lobby" element={
@@ -318,9 +315,7 @@ function App() {
                         <Route path="/leaderboard" element={
                             <Leaderboard onBack={() => navigate('/')} />
                         } />
-                        <Route path="/play-demo" element={
-                            <Game onBack={() => navigate('/')} />
-                        } />
+
                     </Routes>
                 </main>
 
