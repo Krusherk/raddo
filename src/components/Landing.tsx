@@ -5,9 +5,10 @@ interface LandingProps {
     waitingGames: number;
     onPlay: () => void;
     onLeaderboard: () => void;
+    onDemo: () => void;
 }
 
-export function Landing({ totalGames, waitingGames, onPlay, onLeaderboard }: LandingProps) {
+export function Landing({ totalGames, waitingGames, onPlay, onLeaderboard, onDemo }: LandingProps) {
     const { authenticated, login } = usePrivy();
 
     const handlePlayClick = () => {
@@ -38,6 +39,7 @@ export function Landing({ totalGames, waitingGames, onPlay, onLeaderboard }: Lan
                             <polygon points="5 3 19 12 5 21 5 3" />
                         </svg>
                     </button>
+                   
                 </div>
 
                 <div className="landing-stats">

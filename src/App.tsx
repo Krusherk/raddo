@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { Contract, formatEther } from 'ethers';
 import { Navbar } from './components/Navbar';
@@ -8,14 +9,14 @@ import { GameBoard } from './components/GameBoard';
 import { HowItWorks } from './components/HowItWorks';
 import { ResultModal } from './components/ResultModal';
 import { Leaderboard } from './components/Leaderboard';
+import { Game } from './components/Game';
 import { useContract } from './hooks/useContract';
 import type { GameData } from './hooks/useContract';
 import { GameState } from './config/contract';
 import './App.css';
 
-type View = 'landing' | 'lobby' | 'game' | 'howItWorks' | 'leaderboard';
-
 function App() {
+    const navigate = useNavigate();
     const { authenticated } = usePrivy();
     const { wallets } = useWallets();
     const {
@@ -27,7 +28,6 @@ function App() {
         getGameCounter
     } = useContract();
 
-    const [view, setView] = useState<View>('landing');
     const [totalGames, setTotalGames] = useState(0);
     const [waitingGames, setWaitingGames] = useState<number[]>([0, 0, 0]);
     const [currentGameId, setCurrentGameId] = useState<number | null>(null);
@@ -76,7 +76,7 @@ function App() {
                     if (game && game.state !== GameState.Finished) {
                         setCurrentGameId(gameId);
                         setCurrentGame(game);
-                        setView('game');
+                        navigate('/game');
                     }
                 }
             };
@@ -123,7 +123,7 @@ function App() {
                             setCurrentGame(game);
                             player1Address = game.player1;
                         }
-                        setView('game');
+                        navigate('/game');
                         notify('Game created - waiting for opponent', 'info');
                     }
                 });
@@ -197,7 +197,7 @@ function App() {
         setCurrentGame(null);
         setTileOwners(new Map());
         setDangerTiles(new Set());
-        setView('lobby');
+        navigate('/lobby');
     };
 
     // Handle result close
@@ -211,7 +211,7 @@ function App() {
     // Handle play click
     const handlePlay = () => {
         if (authenticated) {
-            setView('lobby');
+            navigate('/lobby');
         }
     };
 
@@ -221,7 +221,7 @@ function App() {
         const game = await getGame(gameId);
         if (game) {
             setCurrentGame(game);
-            setView('game');
+            navigate('/game');
             notify('Game joined!', 'success');
         }
     };
@@ -233,49 +233,53 @@ function App() {
             <div className="glow glow-2"></div>
 
             <div id="app">
-                <Navbar onHowItWorks={() => setView('howItWorks')} />
+                <Navbar onHowItWorks={() => navigate('/how-it-works')} />
 
                 <main className="main">
-                    {view === 'landing' && (
-                        <Landing
-                            totalGames={totalGames}
-                            waitingGames={waitingGames.filter(g => g > 0).length}
-                            onPlay={handlePlay}
-                            onLeaderboard={() => setView('leaderboard')}
-                        />
-                    )}
-
-                    {view === 'lobby' && (
-                        <Lobby
-                            waitingGames={waitingGames}
-                            onBack={() => setView('landing')}
-                            onGameJoined={handleGameJoined}
-                        />
-                    )}
-
-                    {view === 'game' && currentGame && currentGameId && (
-                        <GameBoard
-                            gameId={currentGameId}
-                            game={currentGame}
-                            onExit={handleExitGame}
-                            onTileClick={handleTileClick}
-                            tileOwners={tileOwners}
-                            dangerTiles={dangerTiles}
-                        />
-                    )}
-
-                    {view === 'howItWorks' && (
-                        <HowItWorks onBack={() => setView('landing')} />
-                    )}
-
-                    {view === 'leaderboard' && (
-                        <Leaderboard onBack={() => setView('landing')} />
-                    )}
+                    <Routes>
+                        <Route path="/" element={
+                            <Landing
+                                totalGames={totalGames}
+                                waitingGames={waitingGames.filter(g => g > 0).length}
+                                onPlay={handlePlay}
+                                onLeaderboard={() => navigate('/leaderboard')}
+                                onDemo={() => navigate('/play-demo')}
+                            />
+                        } />
+                        <Route path="/lobby" element={
+                            <Lobby
+                                waitingGames={waitingGames}
+                                onBack={() => navigate('/')}
+                                onGameJoined={handleGameJoined}
+                            />
+                        } />
+                        <Route path="/game" element={
+                            currentGame && currentGameId ? (
+                                <GameBoard
+                                    gameId={currentGameId}
+                                    game={currentGame}
+                                    onExit={handleExitGame}
+                                    onTileClick={handleTileClick}
+                                    tileOwners={tileOwners}
+                                    dangerTiles={dangerTiles}
+                                />
+                            ) : null
+                        } />
+                        <Route path="/how-it-works" element={
+                            <HowItWorks onBack={() => navigate('/')} />
+                        } />
+                        <Route path="/leaderboard" element={
+                            <Leaderboard onBack={() => navigate('/')} />
+                        } />
+                        <Route path="/play-demo" element={
+                            <Game onBack={() => navigate('/')} />
+                        } />
+                    </Routes>
                 </main>
 
                 {/* Mobile Footer */}
                 <footer className="mobile-footer">
-                    <button className="footer-link" onClick={() => setView('howItWorks')}>
+                    <button className="footer-link" onClick={() => navigate('/how-it-works')}>
                         How it Works
                     </button>
                     <a href="https://x.com/takkofun" target="_blank" rel="noopener noreferrer" className="footer-link">
