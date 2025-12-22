@@ -4,11 +4,9 @@ interface LandingProps {
     totalGames: number;
     waitingGames: number;
     onPlay: () => void;
-    onLeaderboard: () => void;
-    onDemo: () => void;
 }
 
-export function Landing({ totalGames, waitingGames, onPlay, onLeaderboard, onDemo }: LandingProps) {
+export function Landing({ totalGames, waitingGames, onPlay }: LandingProps) {
     const { authenticated, login } = usePrivy();
 
     const handlePlayClick = () => {
@@ -39,23 +37,7 @@ export function Landing({ totalGames, waitingGames, onPlay, onLeaderboard, onDem
                             <polygon points="5 3 19 12 5 21 5 3" />
                         </svg>
                     </button>
-                    <button className="btn-demo" onClick={onDemo}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                            <line x1="8" y1="21" x2="16" y2="21" />
-                            <line x1="12" y1="17" x2="12" y2="21" />
-                        </svg>
-                        Try Demo
-                    </button>
                 </div>
-
-                <button className="btn-leaderboard-visual" onClick={onLeaderboard}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M8.21 13.89L7 23 12 20l5 3-1.21-9.12" />
-                        <circle cx="12" cy="8" r="7" />
-                    </svg>
-                    Leaderboard
-                </button>
 
                 <div className="landing-stats">
                     <div className="stat">
