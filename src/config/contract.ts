@@ -9,6 +9,7 @@ export const CONTRACT_ABI = [
     // Events
     "event GameCreated(uint256 indexed gameId, address indexed player1, uint8 tier, uint256 betAmount)",
     "event GameStarted(uint256 indexed gameId, address indexed player2)",
+    "event VRFRequested(uint256 indexed gameId, uint64 sequenceNumber)",
     "event DangerousTilesSet(uint256 indexed gameId)",
     "event MoveMade(uint256 indexed gameId, address indexed player, uint8 tile, bool hitDanger)",
     "event GameFinished(uint256 indexed gameId, address indexed winner, uint256 payout)",
@@ -17,6 +18,8 @@ export const CONTRACT_ABI = [
     "function joinGame(uint8 tier) external payable",
     "function makeMove(uint256 gameId, uint8 tile) external",
     "function getGame(uint256 gameId) external view returns (address player1, address player2, uint8 tier, uint256 betAmount, uint8 state, address currentTurn, address winner, uint256 revealedTiles)",
+    "function getDangerousTiles(uint256 gameId) external view returns (uint8, uint8)",
+    "function games(uint256) external view returns (address player1, address player2, uint8 tier, uint256 betAmount, uint8 state, uint8 dangerTile1, uint8 dangerTile2, address currentTurn, address winner, uint64 vrfSequenceNumber, uint256 revealedTiles)",
     "function getWaitingGame(uint8 tier) external view returns (uint256)",
     "function getRequiredPayment(uint8 tier) external pure returns (uint256)",
     "function gameCounter() external view returns (uint256)",
