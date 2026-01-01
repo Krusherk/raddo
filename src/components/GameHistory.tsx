@@ -235,6 +235,36 @@ export function GameHistory({ onBack }: GameHistoryProps) {
                                             </svg>
                                             VRF Verification
                                         </h4>
+
+                                        {/* Mini Danger Tile Grid */}
+                                        <div className="danger-tiles-preview">
+                                            <p className="preview-label">Danger Tiles Location:</p>
+                                            <div className="mini-grid">
+                                                {Array.from({ length: 25 }, (_, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`mini-tile ${i === game.dangerTile1 || i === game.dangerTile2
+                                                                ? 'danger'
+                                                                : ''
+                                                            }`}
+                                                        style={{
+                                                            animationDelay: i === game.dangerTile1 ? '0s' : '0.3s'
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <div className="tile-legend">
+                                                <span className="legend-item">
+                                                    <span className="legend-dot safe"></span>
+                                                    Safe
+                                                </span>
+                                                <span className="legend-item">
+                                                    <span className="legend-dot danger"></span>
+                                                    Danger
+                                                </span>
+                                            </div>
+                                        </div>
+
                                         <div className="verification-info">
                                             <div className="verification-row">
                                                 <span className="verification-label">VRF Sequence #:</span>
@@ -262,19 +292,32 @@ export function GameHistory({ onBack }: GameHistoryProps) {
                                             </code>
                                         </div>
 
-                                        <a
-                                            href={`${EXPLORER_URL}/address/${CONTRACT_ADDRESS}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn-verify"
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                                <polyline points="15 3 21 3 21 9" />
-                                                <line x1="10" y1="14" x2="21" y2="3" />
-                                            </svg>
-                                            View Transactions on Explorer
-                                        </a>
+                                        <div className="verification-links">
+                                            <a
+                                                href={`https://entropy.pyth.network/`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn-verify primary"
+                                            >
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                                </svg>
+                                                Verify on Pyth Entropy
+                                            </a>
+                                            <a
+                                                href={`${EXPLORER_URL}/address/${CONTRACT_ADDRESS}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn-verify secondary"
+                                            >
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                                    <polyline points="15 3 21 3 21 9" />
+                                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                                </svg>
+                                                View on Explorer
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             )}
