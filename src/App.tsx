@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { Contract, formatEther } from 'ethers';
@@ -45,6 +45,9 @@ function App() {
     const [showDeposit, setShowDeposit] = useState(false);
     const [walletBalance, setWalletBalance] = useState('0.00');
     const [hasShownDeposit, setHasShownDeposit] = useState(false);
+
+    // Refs to prevent duplicate notifications
+    const lastNotifiedGameId = useRef<{ [key: string]: number }>({});
 
     // Notification helper
     const notify = useCallback((msg: string, type: string = 'info') => {
@@ -141,7 +144,6 @@ function App() {
             try {
                 contract = await getContract();
                 const myAddress = wallets[0].address.toLowerCase();
-                let player1Address = '';
 
                 contract.on('GameCreated', async (gameId: bigint, player1: string) => {
                     loadStats();
@@ -150,7 +152,6 @@ function App() {
                         const game = await getGame(Number(gameId));
                         if (game) {
                             setCurrentGame(game);
-                            player1Address = game.player1;
                         }
                         navigate('/game');
                         notify('Game created - waiting for opponent', 'info');
@@ -158,33 +159,43 @@ function App() {
                 });
 
                 contract.on('GameStarted', async (gameId: bigint) => {
-                    if (Number(gameId) === currentGameId) {
-                        await refreshGame();
-                        notify('Opponent joined!', 'success');
-                    }
+                    const gid = Number(gameId);
+                    // Prevent duplicate notifications
+                    if (lastNotifiedGameId.current['started'] === gid) return;
+                    lastNotifiedGameId.current['started'] = gid;
+
+                    await refreshGame();
+                    notify('Opponent joined!', 'success');
                 });
 
                 contract.on('DangerousTilesSet', async (gameId: bigint) => {
-                    if (Number(gameId) === currentGameId) {
-                        await refreshGame();
-                        notify('Game started!', 'success');
-                    }
+                    const gid = Number(gameId);
+                    // Prevent duplicate notifications
+                    if (lastNotifiedGameId.current['tiles'] === gid) return;
+                    lastNotifiedGameId.current['tiles'] = gid;
+
+                    await refreshGame();
+                    notify('Game started!', 'success');
                 });
 
                 contract.on('MoveMade', async (gameId: bigint, player: string, tile: bigint, hitDanger: boolean) => {
-                    if (Number(gameId) === currentGameId) {
-                        const tileIndex = Number(tile);
-                        const isP1 = player.toLowerCase() === player1Address.toLowerCase();
+                    const gid = Number(gameId);
+                    const tileIndex = Number(tile);
 
-                        if (hitDanger) {
-                            setDangerTiles(prev => new Set([...prev, tileIndex]));
-                        } else {
-                            setTileOwners(prev => new Map([...prev, [tileIndex, isP1 ? 'p1' : 'p2']]));
-                        }
+                    // Get the game data to know who player1 is
+                    const game = await getGame(gid);
+                    if (!game) return;
 
-                        if (!hitDanger) {
-                            await refreshGame();
-                        }
+                    const isP1 = player.toLowerCase() === game.player1.toLowerCase();
+
+                    if (hitDanger) {
+                        setDangerTiles(prev => new Set([...prev, tileIndex]));
+                    } else {
+                        setTileOwners(prev => new Map([...prev, [tileIndex, isP1 ? 'p1' : 'p2']]));
+                    }
+
+                    if (!hitDanger) {
+                        await refreshGame();
                     }
                 });
 
