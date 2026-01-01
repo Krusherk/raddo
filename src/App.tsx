@@ -7,6 +7,7 @@ import { Landing } from './components/Landing';
 import { Lobby } from './components/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { HowItWorks } from './components/HowItWorks';
+import { GameHistory } from './components/GameHistory';
 import { ResultModal } from './components/ResultModal';
 import { DepositModal } from './components/DepositModal';
 import { Leaderboard } from './components/Leaderboard';
@@ -279,7 +280,7 @@ function App() {
             <div className="glow glow-2"></div>
 
             <div id="app">
-                <Navbar onHowItWorks={() => navigate('/how-it-works')} />
+                <Navbar onHowItWorks={() => navigate('/how-it-works')} onHistory={() => navigate('/history')} />
 
                 <main className="main">
                     <Routes>
@@ -314,6 +315,9 @@ function App() {
                         } />
                         <Route path="/leaderboard" element={
                             <Leaderboard onBack={() => navigate('/')} />
+                        } />
+                        <Route path="/history" element={
+                            <GameHistory onBack={() => navigate('/')} />
                         } />
 
                     </Routes>
