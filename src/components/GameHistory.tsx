@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { formatEther } from 'ethers';
+import { useWallets } from '@privy-io/react-auth';
 import { useContract } from '../hooks/useContract';
-import { EXPLORER_URL, BET_AMOUNTS } from '../config/contract';
+import { EXPLORER_URL, BET_AMOUNTS, GameState } from '../config/contract';
 
 interface HistoryGame {
     gameId: number;
@@ -21,53 +22,65 @@ interface GameHistoryProps {
 }
 
 export function GameHistory({ onBack }: GameHistoryProps) {
+    const { wallets } = useWallets();
     const { getContract, getProvider } = useContract();
     const [games, setGames] = useState<HistoryGame[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedGame, setExpandedGame] = useState<number | null>(null);
 
     const loadHistory = useCallback(async () => {
+        if (!wallets.length) return;
+
         setLoading(true);
         try {
             const contract = await getContract();
             const provider = await getProvider();
             if (!provider) return;
 
-            // Query GameFinished events (last 500 blocks for demo)
-            const currentBlock = await provider.getBlockNumber();
-            const fromBlock = Math.max(0, currentBlock - 500);
+            const myAddress = wallets[0].address.toLowerCase();
 
-            const filter = contract.filters.GameFinished();
-            const events = await contract.queryFilter(filter, fromBlock, currentBlock);
-
+            // Get total game count and iterate through games to find user's games
+            const gameCount = await contract.gameCounter();
             const historyGames: HistoryGame[] = [];
 
-            for (const event of events.slice(-20).reverse()) { // Last 20 games
-                const gameId = Number(event.args?.[0]);
-                const winner = event.args?.[1] as string;
-                const payout = event.args?.[2] as bigint;
+            // Check recent games (last 100 games or all if less)
+            const startGame = Math.max(1, Number(gameCount) - 100);
 
+            for (let gameId = Number(gameCount); gameId >= startGame && historyGames.length < 20; gameId--) {
                 try {
-                    // Get full game data including VRF info
                     const gameData = await contract.games(gameId);
 
-                    // Get VRF request tx hash
-                    const vrfFilter = contract.filters.VRFRequested(gameId);
-                    const vrfEvents = await contract.queryFilter(vrfFilter, fromBlock, currentBlock);
-                    const vrfTxHash = vrfEvents.length > 0 ? vrfEvents[0].transactionHash : null;
+                    // Only include finished games where user was a player
+                    const isPlayer = gameData.player1.toLowerCase() === myAddress ||
+                        gameData.player2.toLowerCase() === myAddress;
+                    const isFinished = Number(gameData.state) === GameState.Finished;
 
-                    historyGames.push({
-                        gameId,
-                        player1: gameData.player1,
-                        player2: gameData.player2,
-                        winner,
-                        payout: formatEther(payout),
-                        tier: Number(gameData.tier),
-                        dangerTile1: Number(gameData.dangerTile1),
-                        dangerTile2: Number(gameData.dangerTile2),
-                        vrfSequenceNumber: gameData.vrfSequenceNumber,
-                        vrfTxHash
-                    });
+                    if (isPlayer && isFinished) {
+                        // Get VRF tx hash from events
+                        const currentBlock = await provider.getBlockNumber();
+                        const fromBlock = Math.max(0, currentBlock - 100000);
+                        const vrfFilter = contract.filters.VRFRequested(gameId);
+                        const vrfEvents = await contract.queryFilter(vrfFilter, fromBlock, currentBlock);
+                        const vrfTxHash = vrfEvents.length > 0 ? vrfEvents[0].transactionHash : null;
+
+                        // Calculate payout (winner gets 2x bet)
+                        const payout = gameData.winner.toLowerCase() !== '0x0000000000000000000000000000000000000000'
+                            ? formatEther(gameData.betAmount * 2n)
+                            : '0';
+
+                        historyGames.push({
+                            gameId,
+                            player1: gameData.player1,
+                            player2: gameData.player2,
+                            winner: gameData.winner,
+                            payout,
+                            tier: Number(gameData.tier),
+                            dangerTile1: Number(gameData.dangerTile1),
+                            dangerTile2: Number(gameData.dangerTile2),
+                            vrfSequenceNumber: gameData.vrfSequenceNumber,
+                            vrfTxHash
+                        });
+                    }
                 } catch (err) {
                     console.error(`Failed to load game ${gameId}:`, err);
                 }
@@ -79,7 +92,7 @@ export function GameHistory({ onBack }: GameHistoryProps) {
         } finally {
             setLoading(false);
         }
-    }, [getContract, getProvider]);
+    }, [getContract, getProvider, wallets]);
 
     useEffect(() => {
         loadHistory();
