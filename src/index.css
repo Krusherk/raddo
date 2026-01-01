@@ -2638,3 +2638,128 @@ button {
     min-width: auto;
   }
 }
+
+/* ============ Mini Danger Tile Grid ============ */
+.danger-tiles-preview {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.preview-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  max-width: 160px;
+  margin: 0 auto 0.75rem;
+}
+
+.mini-tile {
+  aspect-ratio: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.mini-tile.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  animation: dangerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dangerPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.5);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 2px rgba(255, 71, 87, 0.4);
+    transform: scale(1.05);
+  }
+}
+
+.tile-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend-dot.safe {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+.legend-dot.danger {
+  background: var(--danger);
+}
+
+/* ============ Verification Links ============ */
+.verification-links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-verify.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-primary);
+}
+
+.btn-verify.primary:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
+}
+
+.btn-verify.secondary {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-verify.secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+  .verification-links {
+    flex-direction: column;
+  }
+
+  .btn-verify {
+    justify-content: center;
+  }
+
+  .mini-grid {
+    max-width: 140px;
+  }
+}
