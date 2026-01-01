@@ -29,7 +29,11 @@ export function GameHistory({ onBack }: GameHistoryProps) {
     const [expandedGame, setExpandedGame] = useState<number | null>(null);
 
     const loadHistory = useCallback(async () => {
-        if (!wallets.length) return;
+        const walletAddress = wallets[0]?.address;
+        if (!walletAddress) {
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -37,7 +41,7 @@ export function GameHistory({ onBack }: GameHistoryProps) {
             const provider = await getProvider();
             if (!provider) return;
 
-            const myAddress = wallets[0].address.toLowerCase();
+            const myAddress = walletAddress.toLowerCase();
 
             // Get total game count and iterate through games to find user's games
             const gameCount = await contract.gameCounter();
@@ -92,7 +96,7 @@ export function GameHistory({ onBack }: GameHistoryProps) {
         } finally {
             setLoading(false);
         }
-    }, [getContract, getProvider, wallets]);
+    }, [getContract, getProvider, wallets[0]?.address]);
 
     useEffect(() => {
         loadHistory();
