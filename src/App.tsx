@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { Contract, formatEther } from 'ethers';
+import { formatEther } from 'ethers';
 import { Navbar } from './components/Navbar';
 import { Landing } from './components/Landing';
 import { Lobby } from './components/Lobby';
@@ -22,7 +22,6 @@ function App() {
     const { authenticated } = usePrivy();
     const { wallets } = useWallets();
     const {
-        getContract,
         getBalance,
         makeMove,
         getGame,
@@ -117,125 +116,89 @@ function App() {
         }
     }, [authenticated, wallets, getActiveGame, getGame, loadStats, refreshBalance, hasShownDeposit, navigate]);
 
-    // Refresh game state
-    const refreshGame = useCallback(async () => {
-        if (!currentGameId) return;
-        const game = await getGame(currentGameId);
-        if (game) {
-            setCurrentGame(game);
-        }
-    }, [currentGameId, getGame]);
+    // Track previous game state for change detection (polling-based approach)
+    // Note: Using polling instead of event listeners because Monad testnet RPC
+    // limits eth_getLogs to 100 blocks and has aggressive rate limiting
+    const prevGameState = useRef<{
+        state: number;
+        revealedTiles: bigint;
+        winner: string;
+        player2: string;
+    } | null>(null);
 
-    // Poll for game updates
+    // Poll for game state changes (replaces event listeners)
     useEffect(() => {
-        if (currentGameId && currentGame) {
-            const interval = setInterval(refreshGame, 3000);
-            return () => clearInterval(interval);
-        }
-    }, [currentGameId, currentGame, refreshGame]);
+        if (!currentGameId || !currentGame || !authenticated || !wallets.length) return;
 
-    // Set up contract event listeners
-    useEffect(() => {
-        if (!authenticated || !wallets.length) return;
+        const myAddress = wallets[0].address.toLowerCase();
 
-        let contract: Contract | null = null;
-
-        const setupEvents = async () => {
+        const pollGameState = async () => {
             try {
-                contract = await getContract();
-                const myAddress = wallets[0].address.toLowerCase();
+                const game = await getGame(currentGameId);
+                if (!game) return;
 
-                contract.on('GameCreated', async (gameId: bigint, player1: string) => {
-                    loadStats();
-                    if (player1.toLowerCase() === myAddress) {
-                        setCurrentGameId(Number(gameId));
-                        const game = await getGame(Number(gameId));
-                        if (game) {
-                            setCurrentGame(game);
+                const prev = prevGameState.current;
+
+                // Detect state changes
+                if (prev) {
+                    // Game started (player2 joined)
+                    if (prev.player2 === '0x0000000000000000000000000000000000000000' &&
+                        game.player2 !== '0x0000000000000000000000000000000000000000') {
+                        if (lastNotifiedGameId.current['started'] !== currentGameId) {
+                            lastNotifiedGameId.current['started'] = currentGameId;
+                            notify('Opponent joined!', 'success');
                         }
-                        navigate('/game');
-                        notify('Game created - waiting for opponent', 'info');
-                    }
-                });
-
-                contract.on('GameStarted', async (gameId: bigint) => {
-                    const gid = Number(gameId);
-                    // Prevent duplicate notifications
-                    if (lastNotifiedGameId.current['started'] === gid) return;
-                    lastNotifiedGameId.current['started'] = gid;
-
-                    await refreshGame();
-                    notify('Opponent joined!', 'success');
-                });
-
-                contract.on('DangerousTilesSet', async (gameId: bigint) => {
-                    const gid = Number(gameId);
-                    // Prevent duplicate notifications
-                    if (lastNotifiedGameId.current['tiles'] === gid) return;
-                    lastNotifiedGameId.current['tiles'] = gid;
-
-                    await refreshGame();
-                    notify('Game started!', 'success');
-                });
-
-                contract.on('MoveMade', async (gameId: bigint, player: string, tile: bigint, hitDanger: boolean) => {
-                    const gid = Number(gameId);
-                    const tileIndex = Number(tile);
-
-                    // Get the game data to know who player1 is
-                    const game = await getGame(gid);
-                    if (!game) return;
-
-                    const isP1 = player.toLowerCase() === game.player1.toLowerCase();
-
-                    if (hitDanger) {
-                        setDangerTiles(prev => new Set([...prev, tileIndex]));
-                    } else {
-                        setTileOwners(prev => new Map([...prev, [tileIndex, isP1 ? 'p1' : 'p2']]));
                     }
 
-                    if (!hitDanger) {
-                        await refreshGame();
+                    // VRF completed (state changed from WaitingForVRF to InProgress)
+                    if (prev.state === GameState.WaitingForVRF && game.state === GameState.InProgress) {
+                        if (lastNotifiedGameId.current['tiles'] !== currentGameId) {
+                            lastNotifiedGameId.current['tiles'] = currentGameId;
+                            notify('Game started!', 'success');
+                        }
                     }
-                });
 
-                contract.on('GameFinished', async (gameId: bigint, winner: string, payout: bigint) => {
-                    if (Number(gameId) === currentGameId) {
-                        const won = winner.toLowerCase() === myAddress;
-                        setGameResult({ won, payout: formatEther(payout) });
+
+                    // Game finished
+                    if (prev.state !== GameState.Finished && game.state === GameState.Finished) {
+                        const won = game.winner.toLowerCase() === myAddress;
+                        const payout = formatEther(game.betAmount * 2n);
+                        setGameResult({ won, payout });
                         setShowResult(true);
 
                         // Update leaderboard stats
                         try {
-                            const game = await getGame(Number(gameId));
-                            if (game) {
-                                const loser = winner.toLowerCase() === game.player1.toLowerCase()
-                                    ? game.player2
-                                    : game.player1;
-
-                                // Update winner stats
-                                await updatePlayerStats(winner, true, parseFloat(formatEther(payout)));
-                                // Update loser stats
-                                await updatePlayerStats(loser, false, 0);
-                            }
+                            const loser = game.winner.toLowerCase() === game.player1.toLowerCase()
+                                ? game.player2
+                                : game.player1;
+                            await updatePlayerStats(game.winner, true, parseFloat(payout));
+                            await updatePlayerStats(loser, false, 0);
                         } catch (err) {
                             console.error('Failed to update leaderboard:', err);
                         }
                     }
-                });
+                }
+
+                // Update tracked state
+                prevGameState.current = {
+                    state: game.state,
+                    revealedTiles: game.revealedTiles,
+                    winner: game.winner,
+                    player2: game.player2
+                };
+
+                setCurrentGame(game);
             } catch (err) {
-                console.error('Failed to setup events:', err);
+                console.error('Failed to poll game state:', err);
             }
         };
 
-        setupEvents();
+        // Poll every 2 seconds
+        const interval = setInterval(pollGameState, 2000);
+        pollGameState(); // Initial poll
 
-        return () => {
-            if (contract) {
-                contract.removeAllListeners();
-            }
-        };
-    }, [authenticated, wallets, getContract, getGame, loadStats, refreshGame, currentGameId, notify, navigate]);
+        return () => clearInterval(interval);
+    }, [currentGameId, currentGame, authenticated, wallets, getGame, notify]);
 
     // Handle tile click
     const handleTileClick = async (tile: number) => {
