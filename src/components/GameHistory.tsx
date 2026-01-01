@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { formatEther } from 'ethers';
+import { formatEther, JsonRpcProvider, Contract } from 'ethers';
 import { useWallets } from '@privy-io/react-auth';
-import { useContract } from '../hooks/useContract';
-import { EXPLORER_URL, BET_AMOUNTS } from '../config/contract';
+import { EXPLORER_URL, BET_AMOUNTS, CONTRACT_ADDRESS, CONTRACT_ABI, RPC_URL } from '../config/contract';
 
 interface HistoryGame {
     gameId: number;
@@ -23,93 +22,111 @@ interface GameHistoryProps {
 
 export function GameHistory({ onBack }: GameHistoryProps) {
     const { wallets } = useWallets();
-    const { getContract, getProvider } = useContract();
     const [games, setGames] = useState<HistoryGame[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [expandedGame, setExpandedGame] = useState<number | null>(null);
 
     const loadHistory = useCallback(async () => {
         const walletAddress = wallets[0]?.address;
         if (!walletAddress) {
+            console.log('GameHistory: No wallet connected');
             setLoading(false);
+            setError('Please connect your wallet to view game history');
             return;
         }
 
         setLoading(true);
+        setError(null);
+
         try {
-            const contract = await getContract();
-            const provider = await getProvider();
-            if (!provider) {
+            console.log('GameHistory: Loading for wallet:', walletAddress);
+
+            // Use a read-only provider to avoid chain switching issues
+            const provider = new JsonRpcProvider(RPC_URL);
+            const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+            const myAddress = walletAddress.toLowerCase();
+
+            // Get total game count first
+            let gameCount;
+            try {
+                gameCount = await contract.gameCounter();
+            } catch (err) {
+                console.error('GameHistory: Error getting game count:', err);
+                setError('Unable to connect to blockchain. Please try again.');
                 setLoading(false);
                 return;
             }
 
-            const myAddress = walletAddress.toLowerCase();
+            console.log('GameHistory: Total games on contract:', Number(gameCount));
 
-            // Use events-based approach for faster loading
-            const currentBlock = await provider.getBlockNumber();
-            // Query last 100000 blocks (or from block 0 if chain is newer)
-            const fromBlock = Math.max(0, currentBlock - 100000);
-
-            // Get all GameFinished events in range
-            const finishedFilter = contract.filters.GameFinished();
-            const finishedEvents = await contract.queryFilter(finishedFilter, fromBlock, currentBlock);
+            if (Number(gameCount) === 0) {
+                setGames([]);
+                setLoading(false);
+                return;
+            }
 
             const historyGames: HistoryGame[] = [];
 
-            // Process events in reverse (newest first), limit to 30 to check
-            const recentEvents = finishedEvents.slice(-30).reverse();
+            // Iterate through recent games to find user's finished games
+            const startGame = Math.max(1, Number(gameCount) - 50);
+            console.log('GameHistory: Checking games from', startGame, 'to', Number(gameCount));
 
-            for (const event of recentEvents) {
-                if (historyGames.length >= 15) break; // Limit to 15 games
-
+            for (let gameId = Number(gameCount); gameId >= startGame && historyGames.length < 15; gameId--) {
                 try {
-                    const gameId = Number(event.args?.[0]);
-                    const winner = event.args?.[1] as string;
-                    const payout = event.args?.[2] as bigint;
-
-                    // Get game data to check if user was a player
                     const gameData = await contract.games(gameId);
 
                     const isPlayer = gameData.player1.toLowerCase() === myAddress ||
                         gameData.player2.toLowerCase() === myAddress;
+                    const isFinished = Number(gameData.state) === 3; // GameState.Finished = 3
 
-                    if (isPlayer) {
-                        // Get VRF tx hash
-                        let vrfTxHash: string | null = null;
-                        try {
-                            const vrfFilter = contract.filters.VRFRequested(gameId);
-                            const vrfEvents = await contract.queryFilter(vrfFilter, fromBlock, currentBlock);
-                            vrfTxHash = vrfEvents.length > 0 ? vrfEvents[0].transactionHash : null;
-                        } catch {
-                            // Skip VRF lookup if it fails
-                        }
+                    if (isPlayer && isFinished) {
+                        console.log('GameHistory: Found your game #', gameId);
+
+                        // Calculate payout (winner gets 2x bet)
+                        const payout = gameData.winner.toLowerCase() !== '0x0000000000000000000000000000000000000000'
+                            ? formatEther(gameData.betAmount * 2n)
+                            : '0';
 
                         historyGames.push({
                             gameId,
                             player1: gameData.player1,
                             player2: gameData.player2,
-                            winner,
-                            payout: formatEther(payout),
+                            winner: gameData.winner,
+                            payout,
                             tier: Number(gameData.tier),
                             dangerTile1: Number(gameData.dangerTile1),
                             dangerTile2: Number(gameData.dangerTile2),
                             vrfSequenceNumber: gameData.vrfSequenceNumber,
-                            vrfTxHash
+                            vrfTxHash: null // Skip VRF lookup for now to speed up loading
                         });
                     }
-                } catch (err) {
-                    console.error('Failed to load game:', err);
+                } catch (err: unknown) {
+                    // Only log errors that aren't eth_getLogs related (those are from Privy/viem internals)
+                    const errorMessage = err instanceof Error ? err.message : String(err);
+                    if (!errorMessage.includes('eth_getLogs') && !errorMessage.includes('413')) {
+                        console.error('GameHistory: Error loading game', gameId, err);
+                    }
                 }
             }
 
+            console.log('GameHistory: Found', historyGames.length, 'games for user');
             setGames(historyGames);
-        } catch (err) {
-            console.error('Failed to load history:', err);
+        } catch (err: unknown) {
+            // Check if this is a non-critical error (eth_getLogs limit from Privy/viem)
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            if (errorMessage.includes('eth_getLogs') || errorMessage.includes('413') || errorMessage.includes('limited to a 100 range')) {
+                console.warn('GameHistory: Non-critical eth_getLogs error from provider (can be ignored):', errorMessage);
+                // Don't show error to user as this is a background issue
+            } else {
+                console.error('GameHistory: Failed to load history:', err);
+                setError('Failed to load game history. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
-    }, [getContract, getProvider, wallets[0]?.address]);
+    }, [wallets[0]?.address]);
 
     useEffect(() => {
         loadHistory();
@@ -144,9 +161,19 @@ export function GameHistory({ onBack }: GameHistoryProps) {
                     <div className="spinner"></div>
                     <p>Loading game history...</p>
                 </div>
+            ) : error ? (
+                <div className="history-empty">
+                    <p>{error}</p>
+                    <button className="btn-verify" onClick={loadHistory} style={{ marginTop: '1rem' }}>
+                        Try Again
+                    </button>
+                </div>
             ) : games.length === 0 ? (
                 <div className="history-empty">
-                    <p>No finished games found</p>
+                    <p>No finished games found for your wallet</p>
+                    <p style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.7 }}>
+                        Play some games first, then check back here!
+                    </p>
                 </div>
             ) : (
                 <div className="history-list">
