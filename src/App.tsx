@@ -158,8 +158,34 @@ function App() {
                         }
                     }
 
+                    // Detect new tile reveals (opponent made a move)
+                    if (prev.revealedTiles !== game.revealedTiles && game.state === GameState.InProgress) {
+                        const prevRevealed = prev.revealedTiles;
+                        const newRevealed = game.revealedTiles;
 
-                    // Game finished
+                        // Find newly revealed tiles
+                        for (let i = 0; i < 25; i++) {
+                            const wasRevealed = (prevRevealed & (1n << BigInt(i))) !== 0n;
+                            const isRevealed = (newRevealed & (1n << BigInt(i))) !== 0n;
+
+                            if (!wasRevealed && isRevealed) {
+                                // This tile was just revealed - figure out who made this move
+                                // The currentTurn AFTER the move points to the next player
+                                // So the player who just moved is the opposite of currentTurn
+                                const isP1Turn = game.currentTurn.toLowerCase() === game.player1.toLowerCase();
+                                // If it's now P1's turn, P2 just moved. If it's now P2's turn, P1 just moved.
+                                const mover: 'p1' | 'p2' = isP1Turn ? 'p2' : 'p1';
+
+                                setTileOwners(prevOwners => {
+                                    const newMap = new Map(prevOwners);
+                                    if (!newMap.has(i)) {
+                                        newMap.set(i, mover);
+                                    }
+                                    return newMap;
+                                });
+                            }
+                        }
+                    }                    // Game finished
                     if (prev.state !== GameState.Finished && game.state === GameState.Finished) {
                         const won = game.winner.toLowerCase() === myAddress;
                         const payout = formatEther(game.betAmount * 2n);
@@ -202,11 +228,27 @@ function App() {
 
     // Handle tile click
     const handleTileClick = async (tile: number) => {
-        if (!currentGameId) return;
+        if (!currentGameId || !currentGame || !wallets.length) return;
+
+        const myAddress = wallets[0].address.toLowerCase();
+        const isPlayer1 = currentGame.player1.toLowerCase() === myAddress;
 
         try {
+            // Immediately track this tile's owner (optimistic update)
+            setTileOwners(prev => {
+                const newMap = new Map(prev);
+                newMap.set(tile, isPlayer1 ? 'p1' : 'p2');
+                return newMap;
+            });
+
             await makeMove(currentGameId, tile);
         } catch (err) {
+            // Revert the optimistic update on failure
+            setTileOwners(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(tile);
+                return newMap;
+            });
             notify('Move failed', 'error');
         }
     };
