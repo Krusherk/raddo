@@ -14,14 +14,32 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
     const { wallets } = useWallets();
     const [joining, setJoining] = useState<number | null>(null);
 
+    // Trigger the bot API to check for games
+    const triggerBot = async () => {
+        try {
+            const BOT_API_URL = import.meta.env.VITE_BOT_API_URL || 'https://botrad.vercel.app';
+            await fetch(`${BOT_API_URL}/api/bot`, { method: 'GET' });
+        } catch (err) {
+            console.log('Bot trigger failed (non-critical):', err);
+        }
+    };
+
     const handleJoinGame = async (tier: number) => {
         setJoining(tier);
         try {
             await joinGame(tier);
+
+            // Trigger bot to check for games (runs in background)
+            triggerBot();
+
             // Poll for active game after joining
             if (wallets[0]?.address) {
                 // Small delay to let blockchain update
                 await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Trigger bot again after delay
+                triggerBot();
+
                 const gameId = await getActiveGame(wallets[0].address);
                 if (gameId > 0) {
                     onGameJoined(gameId);
@@ -38,7 +56,7 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
         <section className="view lobby">
             <div className="lobby-header">
                 <h2 className="lobby-title">Select Stakes</h2>
-                <p className="lobby-subtitle">Players are matched within the same tier</p>
+                <p className="lobby-subtitle">Play against other players or our AI bot</p>
             </div>
 
             <div className="stakes-grid">
