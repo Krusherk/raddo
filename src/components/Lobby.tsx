@@ -9,10 +9,13 @@ interface LobbyProps {
     onGameJoined: (gameId: number) => void;
 }
 
+type GameMode = 'select' | 'single' | 'multi';
+
 export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
     const { joinGame, getActiveGame, loading } = useContract();
     const { wallets } = useWallets();
     const [joining, setJoining] = useState<number | null>(null);
+    const [gameMode, setGameMode] = useState<GameMode>('select');
 
     // Trigger the bot API to check for games
     const triggerBot = async () => {
@@ -24,22 +27,22 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
         }
     };
 
-    const handleJoinGame = async (tier: number) => {
+    const handleJoinGame = async (tier: number, isSinglePlayer: boolean) => {
         setJoining(tier);
         try {
             await joinGame(tier);
 
-            // Trigger bot to check for games (runs in background)
-            triggerBot();
+            // Only trigger bot for single player mode
+            if (isSinglePlayer) {
+                triggerBot();
+                // Trigger again after delay to ensure bot sees the game
+                setTimeout(() => triggerBot(), 3000);
+                setTimeout(() => triggerBot(), 6000);
+            }
 
             // Poll for active game after joining
             if (wallets[0]?.address) {
-                // Small delay to let blockchain update
                 await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Trigger bot again after delay
-                triggerBot();
-
                 const gameId = await getActiveGame(wallets[0].address);
                 if (gameId > 0) {
                     onGameJoined(gameId);
@@ -52,11 +55,60 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
         }
     };
 
+    // Mode selection screen
+    if (gameMode === 'select') {
+        return (
+            <section className="view lobby">
+                <div className="lobby-header">
+                    <h2 className="lobby-title">Choose Game Mode</h2>
+                    <p className="lobby-subtitle">Play against AI or other players</p>
+                </div>
+
+                <div className="mode-selection">
+                    <div className="mode-card" onClick={() => setGameMode('single')}>
+                        <div className="mode-icon">🤖</div>
+                        <div className="mode-info">
+                            <h3 className="mode-title">Single Player</h3>
+                            <p className="mode-desc">Play against AI bot</p>
+                        </div>
+                        <div className="mode-arrow">→</div>
+                    </div>
+
+                    <div className="mode-card" onClick={() => setGameMode('multi')}>
+                        <div className="mode-icon">👥</div>
+                        <div className="mode-info">
+                            <h3 className="mode-title">Multiplayer</h3>
+                            <p className="mode-desc">Play against other players</p>
+                        </div>
+                        <div className="mode-arrow">→</div>
+                    </div>
+                </div>
+
+                <button className="btn-back" onClick={onBack}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="19" y1="12" x2="5" y2="12" />
+                        <polyline points="12 19 5 12 12 5" />
+                    </svg>
+                    Back
+                </button>
+            </section>
+        );
+    }
+
+    // Stakes selection screen (for both modes)
+    const isSinglePlayer = gameMode === 'single';
+
     return (
         <section className="view lobby">
             <div className="lobby-header">
-                <h2 className="lobby-title">Select Stakes</h2>
-                <p className="lobby-subtitle">Play against other players or our AI bot</p>
+                <h2 className="lobby-title">
+                    {isSinglePlayer ? '🤖 Single Player' : '👥 Multiplayer'}
+                </h2>
+                <p className="lobby-subtitle">
+                    {isSinglePlayer
+                        ? 'Select stakes to play against the AI bot'
+                        : 'Select stakes to play against other players'}
+                </p>
             </div>
 
             <div className="stakes-grid">
@@ -81,24 +133,34 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
                                 <span>{BET_AMOUNTS[tier] + 1} MON</span>
                             </div>
                         </div>
-                        <div className={`stake-status ${waitingGames[tier] > 0 ? 'waiting' : ''}`}>
-                            <span className="status-dot"></span>
-                            <span className="status-text">
-                                {waitingGames[tier] > 0 ? 'Player waiting' : 'Empty lobby'}
-                            </span>
-                        </div>
+                        {!isSinglePlayer && (
+                            <div className={`stake-status ${waitingGames[tier] > 0 ? 'waiting' : ''}`}>
+                                <span className="status-dot"></span>
+                                <span className="status-text">
+                                    {waitingGames[tier] > 0 ? 'Player waiting' : 'Empty lobby'}
+                                </span>
+                            </div>
+                        )}
+                        {isSinglePlayer && (
+                            <div className="stake-status ai-ready">
+                                <span className="status-dot"></span>
+                                <span className="status-text">AI Ready</span>
+                            </div>
+                        )}
                         <button
                             className="stake-btn"
-                            onClick={() => handleJoinGame(tier)}
+                            onClick={() => handleJoinGame(tier, isSinglePlayer)}
                             disabled={loading || joining !== null}
                         >
-                            {joining === tier ? 'Joining...' : 'Enter Game'}
+                            {joining === tier
+                                ? (isSinglePlayer ? 'Starting...' : 'Joining...')
+                                : (isSinglePlayer ? 'Play vs AI' : 'Enter Game')}
                         </button>
                     </div>
                 ))}
             </div>
 
-            <button className="btn-back" onClick={onBack}>
+            <button className="btn-back" onClick={() => setGameMode('select')}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="19" y1="12" x2="5" y2="12" />
                     <polyline points="12 19 5 12 12 5" />
