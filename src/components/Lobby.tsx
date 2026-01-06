@@ -6,7 +6,7 @@ import { BET_AMOUNTS } from '../config/contract';
 interface LobbyProps {
     waitingGames: number[];
     onBack: () => void;
-    onGameJoined: (gameId: number) => void;
+    onGameJoined: (gameId: number, isSinglePlayer: boolean) => void;
 }
 
 type GameMode = 'select' | 'single' | 'multi';
@@ -45,7 +45,7 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 const gameId = await getActiveGame(wallets[0].address);
                 if (gameId > 0) {
-                    onGameJoined(gameId);
+                    onGameJoined(gameId, isSinglePlayer);
                 }
             }
         } catch (err) {
@@ -65,13 +65,13 @@ export function Lobby({ waitingGames, onBack, onGameJoined }: LobbyProps) {
                 </div>
 
                 <div className="mode-selection">
-                    <div className="mode-card" onClick={() => setGameMode('single')}>
+                    <div className="mode-card disabled" style={{ opacity: 0.5, cursor: 'not-allowed', position: 'relative' }}>
                         <div className="mode-icon">🤖</div>
                         <div className="mode-info">
                             <h3 className="mode-title">Single Player</h3>
-                            <p className="mode-desc">Play against AI bot</p>
+                            <p className="mode-desc" style={{ color: '#f59e0b' }}>Coming Soon</p>
                         </div>
-                        <div className="mode-arrow">→</div>
+                        <div className="mode-arrow" style={{ opacity: 0.3 }}>→</div>
                     </div>
 
                     <div className="mode-card" onClick={() => setGameMode('multi')}>
